@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D 幻影西洋棋</title>
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Three.js 核心與 OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- chess.js 處理邏輯 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+</head>
+
+<body>
+    <div id="game-container">
+        <!-- Three.js Canvas 將渲染於此 -->
+        <div id="canvas-container"></div>
+
+        <!-- UI 覆蓋層 -->
+        <div id="ui-layer">
+            <header>
+                <h1>3D 幻影西洋棋</h1>
+                <div class="status-panel">
+                    <span id="game-status">輪到白方操作</span>
+                    <span id="ai-thinking" class="hidden">AI 思考中...</span>
+                </div>
+            </header>
+
+            <div id="controls-panel">
+                <button id="btn-undo" class="btn" disabled>↩ 悔棋</button>
+                <button id="btn-save-menu" class="btn">💾 存檔/讀檔</button>
+                <button id="btn-settings" class="btn">⚙️ 設定</button>
+                <button id="btn-install" class="btn hidden">📱 安裝 APP</button>
+            </div>
+
+            <div id="history-panel">
+                <h3>走步歷史</h3>
+                <ol id="move-history"></ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模態框：設定 -->
+    <div id="modal-settings" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <h2>遊戲設定</h2>
+            <div class="setting-group">
+                <label for="ai-difficulty">AI 難度:</label>
+                <select id="ai-difficulty">
+                    <option value="easy">簡單 (隨機)</option>
+                    <option value="medium" selected>中等 (淺層思考)</option>
+                    <option value="hard">困難 (深層思考)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="player-color">玩家顏色:</label>
+                <select id="player-color">
+                    <option value="w" selected>白方</option>
+                    <option value="b">黑方</option>
+                </select>
+            </div>
+            <button id="btn-new-game" class="btn primary">開始新遊戲</button>
+            <button id="btn-close-settings" class="btn">關閉</button>
+        </div>
+    </div>
+
+    <!-- 模態框：存檔/讀檔 -->
+    <div id="modal-saves" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <h2>存檔管理</h2>
+            <div id="save-slots">
+                <!-- 存檔欄位會由 JS 動態生成 -->
+            </div>
+            <button id="btn-close-saves" class="btn">關閉</button>
+        </div>
+    </div>
+
+    <!-- 模態框：遊戲結束 -->
+    <div id="modal-game-over" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <h2 id="game-over-title">遊戲結束</h2>
+            <p id="game-over-message">白方勝</p>
+            <button id="btn-restart" class="btn primary">再玩一局</button>
+        </div>
+    </div>
+
+    <!-- 遊戲腳本 -->
+    <script src="js/app.js?v=6" defer></script>
+    <script src="js/undo.js?v=6" defer></script>
+    <script src="js/save.js?v=6" defer></script>
+    <script src="js/ai.js?v=6" defer></script>
+    <script src="js/board.js?v=6" defer></script>
+    <script src="js/game.js?v=6" defer></script>
+</body>
+
+</html>

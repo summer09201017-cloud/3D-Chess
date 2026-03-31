@@ -1,0 +1,21 @@
+{
+  "name": "3D 幻影西洋棋",
+  "short_name": "3D 西洋棋",
+  "description": "跨平台 3D 西洋棋遊戲，支援 AI 對戰、悔棋與存檔",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f0f1b",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
