@@ -1,8 +1,28 @@
 // 主應用程式與 UI 事件邏輯
 
+/* 📱 內建瀏覽器偵測(守門 #30):教會連結走 LINE 發,LINE 的 WebView 裝不了 APP
+   (beforeinstallprompt 永遠不觸發)——開場就講「換瀏覽器」,別讓人按一顆沒反應的鈕。
+   只提醒不擋:棋照樣能下。 */
+const IN_APP_BROWSER = (() => {
+    const ua = navigator.userAgent || '';
+    if (/\bLine\//i.test(ua) || /\bLIFF\b/i.test(ua)) return { n: 'LINE', m: '右上角「⋯」→「用其他瀏覽器開啟」' };
+    if (/FBAN|FBAV|FB_IAB|FB4A/i.test(ua)) return { n: 'Facebook', m: '右上角「⋯」→「在外部瀏覽器中開啟」' };
+    if (/Instagram/i.test(ua)) return { n: 'Instagram', m: '右上角「⋯」→「在瀏覽器中開啟」' };
+    if (/MicroMessenger/i.test(ua)) return { n: '微信', m: '右上角「⋯」→「在瀏覽器中開啟」' };
+    return null;
+})();
+
 // PWA 安裝邏輯
 let deferredPrompt;
 const installBtn = document.getElementById('btn-install');
+if (IN_APP_BROWSER && installBtn) {
+    installBtn.classList.add('hidden');
+    const hint = document.getElementById('in-app-hint');
+    if (hint) {
+        hint.textContent = `你正用 ${IN_APP_BROWSER.n} 內建瀏覽器開啟——要安裝 APP 請先點${IN_APP_BROWSER.m}。棋照樣可以下!`;
+        hint.classList.remove('hidden');
+    }
+}
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -99,6 +119,41 @@ document.addEventListener('DOMContentLoaded', () => {
     btnRestart.addEventListener('click', startNewGame);
     btnNewGame.addEventListener('click', startNewGame);
 
+    /* 📅 每日殘局(一組多題):開題 + 說明。n 不給=接今天還沒解的第一題。
+       ★ announce=false 用在結算框的「下一題」(剛解完不想再彈一次長說明,
+         題名與目標在常駐狀態行上看得到)。 */
+    const openDaily = (n, announce = true) => {
+        modalSettings.classList.add('hidden');
+        modalGameOver.classList.add('hidden');
+        if (!window.chessGame) return;
+        window.chessGame.startDaily(n);
+        const g = window.chessGame;
+        if (g.dailyPuzzle && announce) {
+            const prog = g.dailyProgress();
+            const best = prog && prog.solved[g.dailyPuzzle.id];
+            alert(`📅 ${g.dailyKey} 今天一共 ${prog ? prog.total : 1} 題,已解 ${prog ? prog.done : 0} 題\n\n`
+                + `第 ${g.dailyIndex + 1} 題「${g.dailyPuzzle.name}」\n目標:${g.dailyPuzzle.mateIn} 步將死\n提示:${g.dailyPuzzle.hint}`
+                + (best ? `\n\n這題你的最佳:${best} 步` : '')
+                + '\n\n今天全世界都是同一組題!');
+        }
+    };
+    const btnDaily = document.getElementById('btn-daily');
+    if (btnDaily) btnDaily.addEventListener('click', () => openDaily(undefined, true));
+
+    /* 結算框裡的兩顆(每日模式才顯示)——★ 由來:冒煙測試抓到「結算框蓋住每日鈕」,
+       孩子解完一題接不到下一題,而框裡唯一的鈕會把他丟回一般對局。 */
+    const btnDailyNext = document.getElementById('btn-daily-next');
+    const btnDailyRetry = document.getElementById('btn-daily-retry');
+    if (btnDailyNext) btnDailyNext.addEventListener('click', () => {
+        const g = window.chessGame;
+        const next = g ? g.nextUnsolvedIndex() : -1;
+        openDaily(next >= 0 ? next : undefined, false);
+    });
+    if (btnDailyRetry) btnDailyRetry.addEventListener('click', () => {
+        const g = window.chessGame;
+        openDaily(g ? g.dailyIndex : undefined, false);
+    });
+
     // 悔棋按鈕
     const btnUndo = document.getElementById('btn-undo');
     btnUndo.addEventListener('click', () => {
@@ -107,3 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// 測試掛勾(驗收腳本用;艦隊慣例)——真人操作不經過它
+window.__phantom = { get game() { return window.chessGame; } };

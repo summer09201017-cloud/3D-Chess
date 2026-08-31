@@ -8,6 +8,9 @@ class SaveManager {
     }
 
     saveAuto() {
+        /* 📅 每日殘局不進自動存檔:存檔格式是 **PGN**(從標準開局重播棋譜),
+           而殘局是自訂 FEN 起手 ⇒ 重播會重建出完全不同的局面(靜默壞檔)。 */
+        if (this.game.dailyKey) return;
         const state = {
             pgn: this.game.chess.pgn(),
             playerColor: this.game.playerColor,
@@ -33,6 +36,11 @@ class SaveManager {
     }
 
     saveToSlot(slotIndex) {
+        // 📅 理由同 saveAuto:PGN 重播式存檔吃不下自訂 FEN 起手
+        if (this.game.dailyKey) {
+            alert('每日殘局不用存檔——明天自動換新題,今天的最佳步數已另外記著!');
+            return;
+        }
         const state = {
             pgn: this.game.chess.pgn(),
             playerColor: this.game.playerColor,

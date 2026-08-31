@@ -27,22 +27,26 @@
             <header>
                 <h1>3D 幻影西洋棋</h1>
                 <div class="status-panel">
+                    <span id="daily-line" class="hidden" style="font-weight:700"></span>
                     <span id="game-status">輪到白方操作</span>
                     <span id="ai-thinking" class="hidden">AI 思考中...</span>
                 </div>
             </header>
 
             <div id="controls-panel">
+                <button id="btn-daily" class="btn">📅 每日殘局</button>
                 <button id="btn-undo" class="btn" disabled>↩ 悔棋</button>
                 <button id="btn-save-menu" class="btn">💾 存檔/讀檔</button>
                 <button id="btn-settings" class="btn">⚙️ 設定</button>
                 <button id="btn-install" class="btn hidden">📱 安裝 APP</button>
             </div>
+            <p id="in-app-hint" class="hidden" style="font-size:13px;color:#ffd54f;max-width:340px;line-height:1.6;margin:8px 0 0"></p>
 
             <div id="history-panel">
                 <h3>走步歷史</h3>
                 <ol id="move-history"></ol>
             </div>
+            <p id="verTag" style="font-size:12px;opacity:.7;max-width:340px;line-height:1.6;margin:10px 0 0">版本 v2(2026-08-31)・📅 新增「每日殘局」:每天<b>一組 5 題</b>、全世界同一組(從日期算出來),由易到難、解完一題接下一題——16 題題庫的 N 步殺全部經過電腦數學證明;每題分開記最少步數,明天換新的一組。<br>前幾版:v1 3D 幻影西洋棋(對 AI 三檔/悔棋/存讀檔/PWA)</p>
         </div>
     </div>
 
@@ -86,17 +90,22 @@
         <div class="modal-content glass-panel">
             <h2 id="game-over-title">遊戲結束</h2>
             <p id="game-over-message">白方勝</p>
+            <!-- 📅 每日模式才出現:解完一題直接接下一題(結算框會蓋住上面的每日鈕) -->
+            <button id="btn-daily-next" class="btn primary hidden">📅 下一題</button>
+            <button id="btn-daily-retry" class="btn hidden">🔁 這題再來一次</button>
             <button id="btn-restart" class="btn primary">再玩一局</button>
         </div>
     </div>
 
     <!-- 遊戲腳本 -->
-    <script src="js/app.js?v=6" defer></script>
-    <script src="js/undo.js?v=6" defer></script>
-    <script src="js/save.js?v=6" defer></script>
-    <script src="js/ai.js?v=6" defer></script>
-    <script src="js/board.js?v=6" defer></script>
-    <script src="js/game.js?v=6" defer></script>
+    <!-- ★ puzzles.js 要在 game.js 之前(game.js 讀 window.ChessDaily;它不在時每日鈕安靜不動作) -->
+    <script src="js/puzzles.js?v=7" defer></script>
+    <script src="js/app.js?v=7" defer></script>
+    <script src="js/undo.js?v=7" defer></script>
+    <script src="js/save.js?v=7" defer></script>
+    <script src="js/ai.js?v=7" defer></script>
+    <script src="js/board.js?v=7" defer></script>
+    <script src="js/game.js?v=7" defer></script>
 </body>
 
 </html>

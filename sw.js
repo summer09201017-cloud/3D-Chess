@@ -1,10 +1,11 @@
-const CACHE_NAME = 'chess3d-v4';
+const CACHE_NAME = 'chess3d-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
   './manifest.json',
   './js/app.js',
+  './js/puzzles.js',
   './js/board.js',
   './js/game.js',
   './js/ai.js',

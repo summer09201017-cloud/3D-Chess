@@ -1,0 +1,26 @@
+{
+  "name": "chess3d-phantom",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sw.js",
+  "scripts": {
+    "test": "node test/daily.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/summer09201017-cloud/3D-Chess.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/summer09201017-cloud/3D-Chess/issues"
+  },
+  "homepage": "https://github.com/summer09201017-cloud/3D-Chess#readme",
+  "private": true,
+  "devDependencies": {
+    "chess.js": "^0.10.3",
+    "playwright-core": "^1.62.1"
+  }
+}
