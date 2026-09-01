@@ -30,6 +30,58 @@ ok((await page.locator("#verTag").textContent()).includes("一組 5 題"), "verT
 ok(await page.evaluate(() => !!window.ChessDaily), "puzzles.js 載進來了(window.ChessDaily 在)");
 ok(await page.evaluate(() => typeof window.__phantom.game.startDaily === "function"), "game 有 startDaily");
 
+/* 💡 提示鈕:真的用滑鼠按(不是 evaluate 裡呼叫 showHint)。
+   evaluate-not-click-guard 存在的理由就是這個 —— 繞過真點擊的話,
+   「鈕被別的東西蓋住、按不到」這種病照樣全綠。 */
+ok(await page.locator("#btn-hint").count() === 1, "有「💡 提示」鈕");
+await page.click("#btn-hint");
+await page.waitForTimeout(700);
+const hintA = await page.evaluate(() => {
+  const g = window.__phantom.game;
+  return {
+    hint: g._hint && { from: g._hint.from, to: g._hint.to },
+    selected: g.selectedSquare,
+    status: g.uiStatus.textContent,
+    legal: g._hint
+      ? g.chess.moves({ square: g._hint.from, verbose: true }).some((m) => m.to === g._hint.to)
+      : false,
+    // 目的地那一格要真的變成紫色(判定=畫面,不是只看 state)
+    purple: g._hint
+      ? g.board3d.tiles[g._hint.to].material.color.getHex() === 0xa855f7
+      : false,
+  };
+});
+ok(Boolean(hintA.hint), "按下去算得出一手", JSON.stringify(hintA));
+ok(hintA.status.includes("建議"), "狀態列講出建議", hintA.status);
+ok(hintA.legal, "建議的那一手是合法著法");
+ok(hintA.selected === hintA.hint.from, "順手幫你把那顆棋選起來", `${hintA.selected} vs ${hintA.hint.from}`);
+ok(hintA.purple, "★ 目的地那一格真的變紫(不是被 selectSquare 的藍/紅蓋掉)");
+
+await page.click("#btn-hint");                     // 同局面再按一次 ⇒ 同一手
+await page.waitForTimeout(400);
+const hintB = await page.evaluate(() => {
+  const h = window.__phantom.game._hint;
+  return h.from + h.to;
+});
+ok(hintB === hintA.hint.from + hintA.hint.to,
+  "同一個局面按兩次 ⇒ 同一手(不跳針)", hintA.hint.from + hintA.hint.to + " vs " + hintB);
+
+// 走一手之後,舊建議的 FEN 就對不上了 ⇒ 下次按會重算(不會指著過期的格子)
+await page.evaluate(() => {
+  const g = window.__phantom.game;
+  g.handleSquareClick("e2");
+  g.handleSquareClick("e4");
+});
+await page.waitForTimeout(500);
+ok(await page.evaluate(() => {
+  const g = window.__phantom.game;
+  return g._hint.fen !== g.chess.fen();
+}), "★ 走一手之後,上一手的建議自己就失效了(比對 FEN,不靠逐處清)");
+
+// 回到乾淨的起點,別讓上面兩手污染下面的每日流程
+await page.goto(URL + "/?v=" + Date.now(), { waitUntil: "networkidle" });
+await page.waitForTimeout(1200);
+
 await page.evaluate(() => localStorage.removeItem("chess3d:daily:v1"));
 await page.evaluate(() => localStorage.removeItem("chess3d_autosave"));
 

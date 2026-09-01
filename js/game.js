@@ -183,6 +183,51 @@ class ChessGame {
         this.board3d.clearHighlights();
     }
 
+    /* 💡 AI 提示(2026-09-01 全艦隊棋類批次)
+       借的是**同一支** this.ai.getBestMove —— 提示與對手同源;另寫一套搜尋的話,
+       兩邊分岔的那天不會有任何測試變紅。走法本身來自 chess.moves(),所以合法性
+       不必另外驗(這一站沒有 3D-Xiangqi 那種簡化版走法產生器的落差)。
+       文案三態不可混講:有建議 / 這局結束了 / 真的沒有合法著法。 */
+    showHint() {
+        if (this.isGameOver()) { this.uiStatus.textContent = '💡 這一局已經結束了。'; return; }
+        if (this.isAiThinking) return;                              // AI 在想,不插隊
+        if (this.chess.turn() !== this.playerColor) return;         // 不是你的回合
+
+        /* 同一個局面按幾次都要回同一手:getBestMove 開頭就 shuffleArray(moves),
+           不快取的話同分的兩手會輪流跳,看起來像跳針。
+           鑰匙用 FEN —— 局面一變它自己就對不上,不必去每個動棋盤的地方補一行清除。 */
+        const fen = this.chess.fen();
+        let hint = (this._hint && this._hint.fen === fen) ? this._hint : null;
+
+        if (!hint) {
+            let best = null;
+            try {
+                best = this.ai.getBestMove(this.chess, 'hard');
+            } catch (e) {
+                console.error('[hint] getBestMove threw:', e);
+                this.uiStatus.textContent = '💡 這一手算不出來,先自己走走看。';
+                return;
+            }
+            if (!best) { this.uiStatus.textContent = '💡 找不到可走的棋了。'; return; }
+            hint = this._hint = { fen, from: best.from, to: best.to };
+        }
+
+        /* 先選起來(孩子接著只要點那一格就走完),再把目的地蓋成紫色。
+           ⚠ 順序不能反:selectSquare 會先 clearSelection 再把合法目標畫成藍/紅,
+             紫色先畫的話會被它蓋掉。紫色是挑過的——綠(選中)/藍(可走)/紅(可吃)
+             都已佔用,撞色的話「提示」跟「這格我可以走」在畫面上分不出來。 */
+        this.selectSquare(hint.from);
+        this.board3d.highlightSquare(hint.to, 0xa855f7);
+
+        const piece = this.chess.get(hint.from);
+        const target = this.chess.get(hint.to);
+        const NAMES = { p: '兵', n: '馬', b: '象', r: '車', q: '后', k: '王' };
+        this.uiStatus.textContent = `💡 建議:${piece ? NAMES[piece.type] : '這顆'} `
+            + `${hint.from} → ${hint.to}`
+            + (target ? `,吃掉對方的${NAMES[target.type]}` : '')
+            + '(紫格就是要去的地方)';
+    }
+
     attemptMove(from, to) {
         // 為了簡單起見，如果是士兵走到最後一排，預設升變為皇后
         const move = this.chess.move({

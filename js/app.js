@@ -91,6 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const modalGameOver = document.getElementById('modal-game-over');
 
+    // 💡 AI 提示:借同一支引擎,從玩家這一邊算一手
+    const btnHint = document.getElementById('btn-hint');
+    if (btnHint) btnHint.addEventListener('click', () => window.chessGame.showHint());
+
     // 設定選單
     btnSettings.addEventListener('click', () => modalSettings.classList.remove('hidden'));
     btnCloseSettings.addEventListener('click', () => modalSettings.classList.add('hidden'));
