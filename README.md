@@ -8,8 +8,9 @@
 
 - 德義作品集卡片:`3dchess-an`「3D 幻影西洋棋」(棋類)。
 - 舊址 `3dchess-an.netlify.app`(2026-09-03 實測仍回 200 供舊內容,尚未改 301 殼)。
-- ⚠ **名字陷阱**:repo 叫 `3D-Chess`,但 **`3d-chess.pages.dev` 不是本站**(那是一個英文 5×5×5 多人變體站,
-  不在本帳號的 Pages 專案清單裡)。對賬/部署一律認 `3dchess-an`。
+- ⚠ **名字陷阱**:repo 叫 `3D-Chess`,但 **`3d-chess.pages.dev` 不是本 repo**——那是德義另一個作品
+  「3D 西洋棋(線上多人)」(5×5×5 五層棋盤,作品集卡 `3d-chess-online`),源碼在另一顆硬碟、不在這台機的
+  Cloudflare 帳號 Pages 清單裡(0903 使用者確認)。本 repo 的對賬/部署一律認 `3dchess-an`。
 - 同家族另兩個西洋棋 repo:`3d-chess-co` → `3dchesscodex.pages.dev`(3D 西洋棋 CO);它們是不同迭代,各自一張卡。
 
 ## 功能
