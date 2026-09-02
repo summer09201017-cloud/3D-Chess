@@ -7,7 +7,7 @@
 **https://3dchess-an.pages.dev** —— Cloudflare Pages 專案 `3dchess-an`。
 
 - 德義作品集卡片:`3dchess-an`「3D 幻影西洋棋」(棋類)。
-- 舊址 `3dchess-an.netlify.app`(2026-09-03 實測仍回 200 供舊內容,尚未改 301 殼)。
+- 舊址 `3dchess-an.netlify.app` 已於 2026-09-03 改成 301 殼,轉到上面的正版(curl 實測 301)。
 - ⚠ **名字陷阱**:repo 叫 `3D-Chess`,但 **`3d-chess.pages.dev` 不是本 repo**——那是德義另一個作品
   「3D 西洋棋(線上多人)」(5×5×5 五層棋盤,作品集卡 `3d-chess-online`),源碼在另一顆硬碟、不在這台機的
   Cloudflare 帳號 Pages 清單裡(0903 使用者確認)。本 repo 的對賬/部署一律認 `3dchess-an`。
