@@ -8,6 +8,8 @@
 
 - 德義作品集卡片:`3dchess-an`「3D 幻影西洋棋」(棋類)。
 - 舊址 `3dchess-an.netlify.app` 已於 2026-09-03 改成 301 殼,轉到上面的正版(curl 實測 301)。
+  ⚠ 這個 Netlify 站原本連著本 repo 的 GitHub **自動建置**:0903 推 README 就觸發重建、把 301 殼蓋回完整站。
+  已把該站 `build_settings.stop_builds` 設為 true(照 skill `netlify-autobuild-stop`),之後 push 不再觸發 Netlify 建置、不燒點數。
 - ⚠ **名字陷阱**:repo 叫 `3D-Chess`,但 **`3d-chess.pages.dev` 不是本 repo**——那是德義另一個作品
   「3D 西洋棋(線上多人)」(5×5×5 五層棋盤,作品集卡 `3d-chess-online`),源碼在另一顆硬碟、不在這台機的
   Cloudflare 帳號 Pages 清單裡(0903 使用者確認)。本 repo 的對賬/部署一律認 `3dchess-an`。
