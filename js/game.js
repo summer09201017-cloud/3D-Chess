@@ -347,6 +347,11 @@ class ChessGame {
     }
 
     showGameOver(message) {
+        // 📡 完賽 beacon:一局分出結果(將殺 / 和棋)= 一次 -done。以「這局走了幾手」去重:同一局結算框再開幾次都只發一次,新局自然重置。
+        try {
+            const n = this.chess.history().length;
+            if (window.psDone && this._psDoneAt !== n) { this._psDoneAt = n; window.psDone(); }
+        } catch (e) { /* 統計是配菜 */ }
         document.getElementById('game-over-message').textContent = message;
         /* 📅 每日模式:結算框給「下一題 / 這題再來一次」,並把「再玩一局」藏起來
            (它會回一般對局 —— 解題途中最不該出現的出口)。
