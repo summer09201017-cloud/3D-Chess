@@ -33,11 +33,6 @@
                 </div>
             </header>
 
-            <div id="history-panel">
-                <h3>走步歷史</h3>
-                <ol id="move-history"></ol>
-            </div>
-
             <!-- ★ 底部工具列:選單一律貼底,絕不放在 #ui-layer 的垂直正中央(那裡是棋盤,2026-09-06 修) -->
             <div id="bottom-bar">
                 <p id="in-app-hint" class="hidden"></p>
@@ -52,11 +47,27 @@
                 </div>
 
                 <div id="verTag">
-                    <button id="btn-ver" type="button" aria-expanded="false" aria-controls="ver-detail">ⓘ 版本 v4</button>
-                    <div id="ver-detail" class="hidden">版本 v4(2026-09-06)・🧭 <b>選單搬離棋盤中央</b>——按鈕列改成貼著畫面底部的工具列,棋盤中間不再被一條半透明的鈕帶蓋住、底下的棋子也點得到了;版本簡歷收成「ⓘ 版本」小鈕,不再壓住棋盤<br>前幾版:v3 🔗 網址加 ?daily 直接開每日殘局(信友火花「今日挑戰」卡點了就進今天的題,不用再按每日鈕)・v2 📅 每日殘局:每天一組 5 題、全世界同一組,由易到難、N 步殺全部經過電腦證明,每題分開記最少步數(2026-08-31)・v1 3D 幻影西洋棋(對 AI 三檔/悔棋/存讀檔/PWA)</div>
+                    <button id="btn-ver" type="button" aria-expanded="false" aria-controls="ver-detail">ⓘ 版本 v5</button>
+                    <div id="ver-detail" class="hidden">版本 v5(2026-09-07)・📜 <b>走步歷史改成可摺疊側欄</b>——展開時棋盤自己讓位縮窄(不是被蓋住),收起來只剩右上角一顆「📜 走步歷史(手數)」小鈕,棋盤佔滿整個畫面;開關會記住<br>前幾版:v4 🧭 選單搬離棋盤中央——按鈕列改成貼著畫面底部的工具列,棋盤中間不再被一條半透明的鈕帶蓋住、底下的棋子也點得到了;版本簡歷收成「ⓘ 版本」小鈕,不再壓住棋盤・v3 🔗 網址加 ?daily 直接開每日殘局(信友火花「今日挑戰」卡點了就進今天的題,不用再按每日鈕)・v2 📅 每日殘局:每天一組 5 題、全世界同一組,由易到難、N 步殺全部經過電腦證明,每題分開記最少步數(2026-08-31)・v1 3D 幻影西洋棋(對 AI 三檔/悔棋/存讀檔/PWA)</div>
                 </div>
             </div>
         </div>
+
+        <!-- ★ 走步歷史:可摺疊側欄。展開時 body.dock-open 把 --dock-w 撐開,
+             #canvas-container 跟著讓位 —— 棋盤是「被擠窄」不是「被蓋住」(2026-09-07) -->
+        <aside id="history-dock">
+            <button id="btn-history" type="button" aria-expanded="true" aria-controls="history-body"
+                    title="收合/展開走步歷史">
+                <span class="caret" aria-hidden="true">▸</span>
+                <span>📜 走步歷史</span>
+                <span id="history-count"></span>
+            </button>
+            <div id="history-body">
+                <ol id="move-history"></ol>
+                <p id="history-empty">還沒有走步</p>
+            </div>
+        </aside>
+
     </div>
 
     <!-- 模態框：設定 -->
@@ -139,6 +150,43 @@
       })()
     </script>
     <script>
+      // 📜 走步歷史側欄:展開/收合。展開時棋盤讓位(--dock-w),不是蓋在棋盤上。
+      //    ★ Three.js 的 onWindowResize() 是讀 #canvas-container 的 clientWidth/Height,
+      //      所以每次寬度變了都要補一發 resize,否則畫面會被拉扁(判定=畫面)。
+      (function () {
+        var KEY = 'chess3d.historyOpen'
+        var body = document.body
+        function apply (open, save) {
+          body.classList.toggle('dock-open', open)
+          var b = document.getElementById('btn-history')
+          if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false')
+          if (save) { try { localStorage.setItem(KEY, open ? '1' : '0') } catch (e) {} }
+          dispatchEvent(new Event('resize'))
+        }
+        // 預設:桌機展開、窄螢幕不佔位(CSS 那邊 --dock-w 本來就是 0)
+        var saved = null
+        try { saved = localStorage.getItem(KEY) } catch (e) {}
+        apply(saved === null ? true : saved === '1', false)
+
+        document.addEventListener('click', function (e) {
+          var b = e.target.closest && e.target.closest('#btn-history')
+          if (!b) return
+          apply(!body.classList.contains('dock-open'), true)
+        })
+
+        // 收合時看不到列表,把手數印在鈕上;不改 game.js,直接觀察 <ol> 的變動
+        var ol = document.getElementById('move-history')
+        var count = document.getElementById('history-count')
+        var empty = document.getElementById('history-empty')
+        function sync () {
+          var n = ol.children.length
+          count.textContent = n ? '(' + n + ')' : ''
+          empty.classList.toggle('hidden', n > 0)
+        }
+        if (ol && count) { new MutationObserver(sync).observe(ol, { childList: true }); sync() }
+      })()
+    </script>
+    <script>
       // ⓘ 版本簡歷:預設收起來(展開的長文會壓到棋盤),點一下才展開
       document.addEventListener('click', function (e) {
         var b = e.target.closest && e.target.closest('#btn-ver')
@@ -149,13 +197,13 @@
         b.setAttribute('aria-expanded', open ? 'true' : 'false')
       })
     </script>
-    <script src="js/puzzles.js?v=8" defer></script>
-    <script src="js/app.js?v=8" defer></script>
-    <script src="js/undo.js?v=8" defer></script>
-    <script src="js/save.js?v=8" defer></script>
-    <script src="js/ai.js?v=8" defer></script>
-    <script src="js/board.js?v=8" defer></script>
-    <script src="js/game.js?v=8" defer></script>
+    <script src="js/puzzles.js?v=9" defer></script>
+    <script src="js/app.js?v=9" defer></script>
+    <script src="js/undo.js?v=9" defer></script>
+    <script src="js/save.js?v=9" defer></script>
+    <script src="js/ai.js?v=9" defer></script>
+    <script src="js/board.js?v=9" defer></script>
+    <script src="js/game.js?v=9" defer></script>
 </body>
 
 </html>

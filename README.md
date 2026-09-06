@@ -29,7 +29,7 @@
 | `js/game.js` `js/board.js` `js/ai.js` | 規則、棋盤渲染、AI |
 | `js/puzzles.js` | 每日殘局題庫 |
 | `js/save.js` `js/undo.js` `js/app.js` | 存檔、悔棋、接線 |
-| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v9'`(改殼層檔必 +1;v9 = 選單搬到底部工具列) |
+| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v10'`(改殼層檔必 +1;v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄) |
 | `manifest.json` / `icons/` | PWA |
 | `test/daily.mjs` | `npm test`:每日殘局資料檢查 |
 | `scripts/browser-check.mjs` | 真瀏覽器冒煙檢查 |
