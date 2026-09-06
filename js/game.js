@@ -197,9 +197,19 @@ class ChessGame {
            不快取的話同分的兩手會輪流跳,看起來像跳針。
            鑰匙用 FEN —— 局面一變它自己就對不上,不必去每個動棋盤的地方補一行清除。 */
         const fen = this.chess.fen();
-        let hint = (this._hint && this._hint.fen === fen) ? this._hint : null;
+        const cached = (this._hint && this._hint.fen === fen) ? this._hint : null;
+        if (cached) { this.applyHint(cached); return; }
+        if (this._hintBusy) return;                                 // 已經在算了,別按兩次算兩次
 
-        if (!hint) {
+        /* getBestMove 是同步的:直接呼叫會先把畫面卡住、算完才一起畫出來,使用者看到的是
+           「按了沒反應,過很久紫格才跳出來」(2026-09-07 使用者回報「AI 要想很久」;
+           當時中局一手 5 秒,ai.js 提速 11 倍後約 0.4 秒,但同步卡畫面這件事還是要處理)。
+           先把「想一下…」畫出來(rAF → 下一個 tick),再開始算。 */
+        this._hintBusy = true;
+        this.uiStatus.textContent = '💡 想一下…';
+        requestAnimationFrame(() => setTimeout(() => {
+            this._hintBusy = false;
+            if (this.chess.fen() !== fen) return;                   // 等的那一瞬局面變了,這手作廢
             let best = null;
             try {
                 best = this.ai.getBestMove(this.chess, 'hard');
@@ -209,9 +219,13 @@ class ChessGame {
                 return;
             }
             if (!best) { this.uiStatus.textContent = '💡 找不到可走的棋了。'; return; }
-            hint = this._hint = { fen, from: best.from, to: best.to };
-        }
+            this._hint = { fen, from: best.from, to: best.to };
+            this.applyHint(this._hint);
+        }, 0));
+    }
 
+    /** 把算好的提示畫到棋盤與狀態列 */
+    applyHint(hint) {
         /* 先選起來(孩子接著只要點那一格就走完),再把目的地蓋成紫色。
            ⚠ 順序不能反:selectSquare 會先 clearSelection 再把合法目標畫成藍/紅,
              紫色先畫的話會被它蓋掉。紫色是挑過的——綠(選中)/藍(可走)/紅(可吃)

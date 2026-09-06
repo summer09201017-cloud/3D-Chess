@@ -18,7 +18,11 @@
 ## 功能
 
 - 📅 **每日殘局**:每天一組 5 題(2026-08-31,自 3d-chess-co 垂直搬運)。
-- 💡 **AI 提示**:借同一支 `getBestMove` 從玩家這邊算一手(2026-09-01)。
+- 💡 **AI 提示**:借同一支 `getBestMove` 從玩家這邊算一手(2026-09-01)。2026-09-07 提速 11 倍(中局 5.2s → 0.46s):
+  ①走法先排序(MVV-LVA)再搜,alpha-beta 才剪得到 ②根層也收窄視窗 ③終局用「沒棋可走」判,不在每個葉子呼叫
+  `game_over()/in_checkmate()/in_draw()`(0.10.3 每支都會再產生一次全部著法,`in_draw` 還重播整譜)
+  ④最後一層不真走棋:SAN 尾巴 `#` 就是將死,其他用「子力 ± 吃子」算。38 局面差分測試分數逐一相同。
+  ★ 剩下 92% 時間在 chess.js 自己的著法生成(每次都算 SAN),再快要換引擎。按下去先顯示「想一下…」再算(rAF → tick)。
 - ↩ 悔棋、💾 存檔/讀檔、⚙️ 設定、📱 安裝 APP(PWA)。
 
 ## 檔案
@@ -29,7 +33,7 @@
 | `js/game.js` `js/board.js` `js/ai.js` | 規則、棋盤渲染、AI |
 | `js/puzzles.js` | 每日殘局題庫 |
 | `js/save.js` `js/undo.js` `js/app.js` | 存檔、悔棋、接線 |
-| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v10'`(改殼層檔必 +1;v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄) |
+| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v11'`(改殼層檔必 +1;v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速) |
 | `manifest.json` / `icons/` | PWA |
 | `test/daily.mjs` | `npm test`:每日殘局資料檢查 |
 | `scripts/browser-check.mjs` | 真瀏覽器冒煙檢查 |
