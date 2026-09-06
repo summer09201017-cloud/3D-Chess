@@ -4,6 +4,7 @@
   "description": "跨平台 3D 西洋棋遊戲，支援 AI 對戰、悔棋與存檔",
   "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#0f0f1b",
   "theme_color": "#1a1a2e",
   "icons": [

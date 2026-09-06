@@ -15,6 +15,15 @@
 
     <!-- chess.js 處理邏輯 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<style id="mfsZoomStyle">
+/* mfs-portrait-zoom v1 —— 勿手改;要改請改 skills/force-landscape-pwa/patches/add-portrait-zoom.mjs 後重打 */
+#mfsFull{display:none}
+
+@media (pointer:coarse){#mfsFull{display:inline-flex;align-items:center;gap:6px}}
+@media (pointer:fine){#mfsFull{display:inline-flex;align-items:center;gap:6px}} /* 放進工具列的鈕桌機也給:投影老師要用 */
+
+
+</style>
 </head>
 
 <body>
@@ -48,8 +57,8 @@
                 </div>
 
                 <div id="verTag">
-                    <button id="btn-ver" type="button" aria-expanded="false" aria-controls="ver-detail">ⓘ 版本 v6</button>
-                    <div id="ver-detail" class="hidden">版本 v6(2026-09-07)・🏷️ <b>棋子頭上標中文名</b>——每顆棋子頭頂多一張名牌(兵/城堡/騎士/主教/皇后/國王),牌子永遠正對鏡頭、轉到任何角度都讀得到,不必再靠形狀猜;底下的「🏷️ 棋名」鈕可隨時關掉,選擇會記住・⚡ <b>💡 提示變快 11 倍</b>——中局一手從 5 秒縮到 0.4 秒(走法先排序讓剪枝真的剪、最後一層不真走棋),而且按下去立刻先顯示「想一下…」,不再像沒反應;提示講的棋名改成和名牌一致(主教/城堡/騎士/皇后/國王,不再是象/車/馬)<br>前幾版:v5 📜 走步歷史改成可摺疊側欄——展開時棋盤自己讓位縮窄(不是被蓋住),收起來只剩右上角一顆「📜 走步歷史(手數)」小鈕,棋盤佔滿整個畫面;開關會記住<br>前幾版:v4 🧭 選單搬離棋盤中央——按鈕列改成貼著畫面底部的工具列,棋盤中間不再被一條半透明的鈕帶蓋住、底下的棋子也點得到了;版本簡歷收成「ⓘ 版本」小鈕,不再壓住棋盤・v3 🔗 網址加 ?daily 直接開每日殘局(信友火花「今日挑戰」卡點了就進今天的題,不用再按每日鈕)・v2 📅 每日殘局:每天一組 5 題、全世界同一組,由易到難、N 步殺全部經過電腦證明,每題分開記最少步數(2026-08-31)・v1 3D 幻影西洋棋(對 AI 三檔/悔棋/存讀檔/PWA)</div>
+                    <button id="btn-ver" type="button" aria-expanded="false" aria-controls="ver-detail">ⓘ 版本 v7</button>
+                    <div id="ver-detail" class="hidden">版本 v7(2026-09-07)・⛶ <b>底部工具列多一顆「放大」</b>——按下去進全螢幕(Android 連瀏覽器網址列一起收掉),棋盤吃滿整個螢幕;iPhone 不支援網頁全螢幕,按了沒變化是正常的(加入主畫面後開就沒有網址列);再按一次縮回<br>前幾版:v6 🏷️ 棋子頭上標中文名——每顆棋子頭頂多一張名牌(兵/城堡/騎士/主教/皇后/國王),牌子永遠正對鏡頭、轉到任何角度都讀得到,不必再靠形狀猜;底下的「🏷️ 棋名」鈕可隨時關掉,選擇會記住・⚡ 💡 提示變快 11 倍——中局一手從 5 秒縮到 0.4 秒(走法先排序讓剪枝真的剪、最後一層不真走棋),而且按下去立刻先顯示「想一下…」,不再像沒反應;提示講的棋名改成和名牌一致(主教/城堡/騎士/皇后/國王,不再是象/車/馬)(2026-09-07)・v5 📜 走步歷史改成可摺疊側欄——展開時棋盤自己讓位縮窄(不是被蓋住),收起來只剩右上角一顆「📜 走步歷史(手數)」小鈕,棋盤佔滿整個畫面;開關會記住<br>前幾版:v4 🧭 選單搬離棋盤中央——按鈕列改成貼著畫面底部的工具列,棋盤中間不再被一條半透明的鈕帶蓋住、底下的棋子也點得到了;版本簡歷收成「ⓘ 版本」小鈕,不再壓住棋盤・v3 🔗 網址加 ?daily 直接開每日殘局(信友火花「今日挑戰」卡點了就進今天的題,不用再按每日鈕)・v2 📅 每日殘局:每天一組 5 題、全世界同一組,由易到難、N 步殺全部經過電腦證明,每題分開記最少步數(2026-08-31)・v1 3D 幻影西洋棋(對 AI 三檔/悔棋/存讀檔/PWA)</div>
                 </div>
             </div>
         </div>
@@ -198,13 +207,58 @@
         b.setAttribute('aria-expanded', open ? 'true' : 'false')
       })
     </script>
-    <script src="js/puzzles.js?v=11" defer></script>
-    <script src="js/app.js?v=11" defer></script>
-    <script src="js/undo.js?v=11" defer></script>
-    <script src="js/save.js?v=11" defer></script>
-    <script src="js/ai.js?v=11" defer></script>
-    <script src="js/board.js?v=11" defer></script>
-    <script src="js/game.js?v=11" defer></script>
+    <script src="js/puzzles.js?v=12" defer></script>
+    <script src="js/app.js?v=12" defer></script>
+    <script src="js/undo.js?v=12" defer></script>
+    <script src="js/save.js?v=12" defer></script>
+    <script src="js/ai.js?v=12" defer></script>
+    <script src="js/board.js?v=12" defer></script>
+    <script src="js/game.js?v=12" defer></script>
+<button type="button" id="mfsFull" class="btn" title="放大(全螢幕)" aria-label="放大(全螢幕)" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>放大</span></button>
+<script>
+/* mfs-portrait-zoom v1 */
+(function () {
+  try {
+    if (window.self !== window.top) { var f0 = document.getElementById('mfsFull'); if (f0) f0.remove(); return; } /* 嵌入時不搶宿主 */
+    var targetSel = "#game-container";
+    var fsEl = function () { return (targetSel && document.querySelector(targetSel)) || document.documentElement; };
+    var isFs = function () { return !!(document.fullscreenElement || document.webkitFullscreenElement); };
+    var immersive = false;
+    var btn = document.getElementById('mfsFull');
+    var mount = document.querySelector("#controls-panel"); if (mount && btn && btn.parentNode !== mount) mount.appendChild(btn);
+    function refit() {
+      /* Three.js / canvas 遊戲多半聽 resize 重算;版面剛變、要等一幀再發,不然量到舊尺寸 */
+      requestAnimationFrame(function () { try { window.dispatchEvent(new Event('resize')); } catch (e) {} });
+    }
+    function paint() {
+      try {
+        document.body.classList.toggle('immersive', immersive);
+        document.body.classList.toggle('mfs-fs', isFs());
+        if (btn) { btn.setAttribute('aria-pressed', String(immersive)); var s = btn.querySelector('span'); if (s) s.textContent = immersive ? '縮小' : '放大'; }
+      } catch (e) {}
+      refit();
+    }
+    function toggle() {
+      immersive = !immersive;
+      try {
+        var el = fsEl();
+        var req = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen;
+        var out = document.exitFullscreen || document.webkitExitFullscreen;
+        if (immersive && req && !isFs()) { var p = req.call(el); if (p && p.catch) p.catch(function () {}); }
+        else if (!immersive && isFs() && out) { var q = out.call(document); if (q && q.catch) q.catch(function () {}); }
+      } catch (e) { /* iOS Safari 不支援網頁全螢幕:只吃 immersive 樣式,不能炸遊戲 */ }
+      paint();
+    }
+    if (btn) btn.addEventListener('click', toggle);
+    /* 使用者按 Esc / 系統手勢退出全螢幕 ⇒ 沉浸樣式也收;只在支援全螢幕的裝置跟隨(iPhone 沒這事件,跟隨會誤關) */
+    var supports = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+    if (supports) ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
+      document.addEventListener(ev, function () { if (!isFs() && immersive) { immersive = false; } paint(); });
+    });
+    paint();
+  } catch (e) {}
+})();
+</script>
 </body>
 
 </html>
