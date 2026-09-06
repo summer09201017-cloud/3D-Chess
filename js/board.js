@@ -1,3 +1,17 @@
+/* ══════════ 🏷️ 棋名標籤(2026-09-07)══════════
+   使用者回報:「我不知道哪個棋是哪個長相」。3D 棋子只靠形狀分辨,對新手與長輩太吃力。
+   作法:CanvasTexture → THREE.Sprite(永遠正對鏡頭 ⇒ 轉到任何角度都讀得到),
+   掛在每顆棋子頭頂、下緣帶一個指向棋子的小尖角,一眼看得出是「這一顆」的名字。
+   ★ 標籤 raycast 關掉 —— 浮在半空的牌子在視覺上會蓋到別格,不關會點錯棋。
+   ★ 貼圖/材質依「type+color」快取:updateBoard() 每走一手就重建 32 顆棋子,
+     不快取的話每手漏 32 張 canvas 貼圖(下完一局就是幾千張)。
+   ★ 為什麼不真的「刻在棋身上」:棋身在正常視距只有 40~60px 高,刻上去的字約十幾像素,
+     反而看不清 —— 這裡以「讀得到」為優先。 */
+const PIECE_LABEL_TEXT = { p: '兵', r: '城堡', n: '騎士', b: '主教', q: '皇后', k: '國王' };
+// 每種棋子頭頂的高度(棋子本體最高點再往上留一點空隙;數值對應 createPieceMesh 裡各型的實際高度)
+const PIECE_LABEL_Y = { p: 1.02, r: 1.28, n: 1.33, b: 1.47, q: 1.54, k: 1.60 };
+const PIECE_LABEL_KEY = 'chess3d.pieceLabels';
+
 class ChessBoard3D {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
@@ -31,6 +45,12 @@ class ChessBoard3D {
 
         this.pieces = {};
         this.tiles = {};
+
+        // 🏷️ 棋名標籤:預設「開」(看不懂棋子長相是這站的主要卡點);使用者關過就記住
+        let savedLabels = null;
+        try { savedLabels = localStorage.getItem(PIECE_LABEL_KEY); } catch (e) { /* 私密模式照玩 */ }
+        this.showLabels = savedLabels !== '0';
+        this._labelMats = {};   // key = type+color → THREE.SpriteMaterial(共用,省貼圖)
 
         this.selectedTile = null;
         this.highlightedTiles = [];
@@ -147,6 +167,76 @@ class ChessBoard3D {
                 this.scene.add(tile);
             }
         }
+    }
+
+    /** 🏷️ 產生一顆棋子的名字牌(Sprite,永遠正對鏡頭)。材質依 type+color 快取。 */
+    makePieceLabel(type, color) {
+        const key = type + color;
+        if (!this._labelMats[key]) {
+            const isWhite = color === 'w';
+            const plate = isWhite ? '#f6efe1' : '#23252f';   // 牌面=棋子的色系,順便看得出黑白方
+            const ink = isWhite ? '#1a1a2e' : '#f4f1e8';
+            const edge = '#4ecca3';                          // 邊框=棋盤邊框的青綠,整站同一套視覺
+
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 128;                   // 2 的次方:避免 NPOT 貼圖在舊行動 GPU 上出事
+            const g = c.getContext('2d');
+
+            // 圓角牌面
+            const x0 = 6, y0 = 6, x1 = 250, y1 = 92, r = 20;
+            g.beginPath();
+            g.moveTo(x0 + r, y0);
+            g.lineTo(x1 - r, y0); g.quadraticCurveTo(x1, y0, x1, y0 + r);
+            g.lineTo(x1, y1 - r); g.quadraticCurveTo(x1, y1, x1 - r, y1);
+            g.lineTo(x0 + r, y1); g.quadraticCurveTo(x0, y1, x0, y1 - r);
+            g.lineTo(x0, y0 + r); g.quadraticCurveTo(x0, y0, x0 + r, y0);
+            g.closePath();
+            g.fillStyle = plate; g.fill();
+            g.lineWidth = 7; g.strokeStyle = edge; g.stroke();
+
+            // 下緣小尖角:指著它自己那顆棋子(不然一堆牌子浮在半空,分不出是誰的)
+            g.beginPath();
+            g.moveTo(110, y1 - 4); g.lineTo(146, y1 - 4); g.lineTo(128, 122);
+            g.closePath();
+            g.fillStyle = plate; g.fill();
+            g.lineWidth = 7; g.strokeStyle = edge; g.stroke();
+            g.beginPath();                                   // 補一刀蓋掉尖角與牌面之間的那條邊
+            g.moveTo(112, y1 - 5); g.lineTo(144, y1 - 5);
+            g.lineWidth = 9; g.strokeStyle = plate; g.stroke();
+
+            // 名字
+            g.font = 'bold 58px "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif';
+            g.textAlign = 'center';
+            g.textBaseline = 'middle';
+            g.fillStyle = ink;
+            g.fillText(PIECE_LABEL_TEXT[type] || '', 128, 51);
+
+            const tex = new THREE.CanvasTexture(c);
+            tex.minFilter = THREE.LinearFilter;              // 不做 mipmap:字才不會在遠處糊成一團
+            tex.generateMipmaps = false;
+            this._labelMats[key] = new THREE.SpriteMaterial({
+                map: tex,
+                transparent: true,
+                depthWrite: false                            // 牌子彼此不互相寫深度,重疊時不會挖出黑洞
+            });
+        }
+
+        const sprite = new THREE.Sprite(this._labelMats[key]);
+        sprite.name = 'pieceLabel';
+        sprite.scale.set(0.78, 0.39, 1);                     // 一格=1,牌子略窄於一格
+        sprite.position.y = PIECE_LABEL_Y[type] || 1.3;
+        sprite.visible = this.showLabels === true;           // ★ 只認嚴格 true
+        sprite.raycast = function () { };                    // ★ 不吃點擊:否則會擋住它視覺上蓋到的別格
+        return sprite;
+    }
+
+    /** 🏷️ 開關棋名標籤(記在 localStorage,下次進來照舊) */
+    setLabelsVisible(on) {
+        this.showLabels = on === true;
+        Object.values(this.pieces).forEach((group) => {
+            group.traverse((o) => { if (o.name === 'pieceLabel') o.visible = this.showLabels; });
+        });
+        try { localStorage.setItem(PIECE_LABEL_KEY, this.showLabels ? '1' : '0'); } catch (e) { /* 私密模式照玩 */ }
     }
 
     // 為每個棋子類型創建 Group（不用已移除的 Geometry 合併法）
@@ -293,6 +383,9 @@ class ChessBoard3D {
                 child.receiveShadow = true;
             }
         });
+
+        // 🏷️ 名字牌最後掛(放在投影設定之後:Sprite 不該投影,也不該接影子)
+        group.add(this.makePieceLabel(type, color));
 
         return group;
     }

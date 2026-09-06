@@ -95,6 +95,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnHint = document.getElementById('btn-hint');
     if (btnHint) btnHint.addEventListener('click', () => window.chessGame.showHint());
 
+    // 🏷️ 棋名標籤開關(2026-09-07):使用者回報「不知道哪個棋是哪個長相」,預設開、關掉會記住。
+    //    ★ 狀態寫在鈕的文字上,不是只靠 title —— 手機沒有 hover,tooltip 等於隱形。
+    const btnLabels = document.getElementById('btn-labels');
+    if (btnLabels) {
+        const syncLabels = () => {
+            const on = window.chessGame.board3d.showLabels === true;
+            btnLabels.textContent = on ? '🏷️ 棋名:開' : '🏷️ 棋名:關';
+            btnLabels.setAttribute('aria-pressed', on ? 'true' : 'false');
+            btnLabels.classList.toggle('primary', on);
+        };
+        btnLabels.addEventListener('click', () => {
+            const b = window.chessGame.board3d;
+            b.setLabelsVisible(!(b.showLabels === true));
+            syncLabels();
+        });
+        syncLabels();
+    }
+
     // 設定選單
     btnSettings.addEventListener('click', () => modalSettings.classList.remove('hidden'));
     btnCloseSettings.addEventListener('click', () => modalSettings.classList.add('hidden'));
