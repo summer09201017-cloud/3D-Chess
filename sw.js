@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chess3d-v11';
+const CACHE_NAME = 'chess3d-v12';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

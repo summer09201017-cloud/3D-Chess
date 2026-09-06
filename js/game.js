@@ -235,7 +235,11 @@ class ChessGame {
 
         const piece = this.chess.get(hint.from);
         const target = this.chess.get(hint.to);
-        const NAMES = { p: '兵', n: '馬', b: '象', r: '車', q: '后', k: '王' };
+        /* 棋名跟棋子頭上的名牌(board.js PIECE_LABEL_TEXT)用同一張表,別再各寫一份:
+           2026-09-07 使用者抓到提示講「象/車」、名牌卻寫「主教/城堡」。board.js 在 game.js 之前載入,
+           頂層 const 在同一個全域語彙環境看得到;萬一它不在(被拆掉/改名),退回同一套西洋棋譯名。 */
+        const NAMES = (typeof PIECE_LABEL_TEXT !== 'undefined' && PIECE_LABEL_TEXT)
+            || { p: '兵', r: '城堡', n: '騎士', b: '主教', q: '皇后', k: '國王' };
         this.uiStatus.textContent = `💡 建議:${piece ? NAMES[piece.type] : '這顆'} `
             + `${hint.from} → ${hint.to}`
             + (target ? `,吃掉對方的${NAMES[target.type]}` : '')
