@@ -18,7 +18,7 @@
 ## 功能
 
 - 📅 **每日殘局**:每天一組 5 題(2026-08-31,自 3d-chess-co 垂直搬運)。
-- 💡 **AI 提示**:借同一支 `getBestMove` 從玩家這邊算一手(2026-09-01)。2026-09-07 提速 11 倍(中局 5.2s → 0.46s):
+- 💡 **AI 提示**:借同一支 `getBestMove` 從玩家這邊算一手(2026-09-01)。**2026-09-07 v9 提示品質**:使用者退件「提示叫我吃、吃完被吃回=等價交換」。病因 ①只算子力 ⇒ 中局九成的手 0 分平手,而吃子排最前、同分不換人 ⇒ 等價交換永遠勝出;②深度 3 是奇數層,「我吃→他回吃→我再吃」看起來賺、第 4 步被吃回看不到(horizon)。修法:`js/ai.js` 加 PST 位置分(Michniewski 表 ÷10)、葉子吃子用 SEE(swap-list,含 x-ray)算到底、提示走 `getBestMove(chess,'hard',{forHint:true})` ⇒ `searchRootForHint` 兩段式:先搜安靜手,吃子要多賺 `HINT_TRADE_MARGIN`=5(半個兵)才建議;AI 對手仍走 `searchRoot`。曾試過真的走棋算到底(quiescence):中局 5~24 秒,不可用。測試 `test/ai.mjs`(12 項:手工陷阱局面 + 30 隨機中局用獨立裁判 refQuiesce 驗「不虧」+ 耗時 <3s;實測平均 0.5s、最慢 1.2s)。2026-09-07 提速 11 倍(中局 5.2s → 0.46s):
   ①走法先排序(MVV-LVA)再搜,alpha-beta 才剪得到 ②根層也收窄視窗 ③終局用「沒棋可走」判,不在每個葉子呼叫
   `game_over()/in_checkmate()/in_draw()`(0.10.3 每支都會再產生一次全部著法,`in_draw` 還重播整譜)
   ④最後一層不真走棋:SAN 尾巴 `#` 就是將死,其他用「子力 ± 吃子」算。38 局面差分測試分數逐一相同。
@@ -39,7 +39,7 @@
 | `js/game.js` `js/board.js` `js/ai.js` | 規則、棋盤渲染、AI |
 | `js/puzzles.js` | 每日殘局題庫 |
 | `js/save.js` `js/undo.js` `js/app.js` | 存檔、悔棋、接線 |
-| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v14'`(改殼層檔必 +1;v14 = 題庫題名改城堡/騎士(兩站同步)、v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速、v12 = 提示棋名對齊名牌、v13 = 直向放大鈕 + manifest orientation any)。⚠ 這個 repo 一天內被三場 session 接力改過,**bump 前先 `grep CACHE_NAME sw.js` 看現值**,別憑記憶(0907 有一場寫「sw v10」其實沒 bump) |
+| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v15'`(改殼層檔必 +1;v15 = 提示不建議等價交換(PST + SEE + 半兵門檻)、v14 = 題庫題名改城堡/騎士(兩站同步)、v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速、v12 = 提示棋名對齊名牌、v13 = 直向放大鈕 + manifest orientation any)。⚠ 這個 repo 一天內被三場 session 接力改過,**bump 前先 `grep CACHE_NAME sw.js` 看現值**,別憑記憶(0907 有一場寫「sw v10」其實沒 bump) |
 | `manifest.json` / `icons/` | PWA |
 | `test/daily.mjs` | `npm test`:每日殘局資料檢查 |
 | `scripts/browser-check.mjs` | 真瀏覽器冒煙檢查 |

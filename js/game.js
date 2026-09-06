@@ -212,14 +212,26 @@ class ChessGame {
             if (this.chess.fen() !== fen) return;                   // 等的那一瞬局面變了,這手作廢
             let best = null;
             try {
-                best = this.ai.getBestMove(this.chess, 'hard');
+                /* forHint(v9):不主動建議沒賺頭的交換 —— 吃子那條線要比最好的安靜手多賺半個兵才會被建議
+                   (使用者 2026-09-07 退件「叫我吃、吃完被吃回,等於交換被吃」)。AI 對手不吃這條,照原本下。 */
+                best = this.ai.getBestMove(this.chess, 'hard', { forHint: true });
             } catch (e) {
                 console.error('[hint] getBestMove threw:', e);
                 this.uiStatus.textContent = '💡 這一手算不出來,先自己走走看。';
                 return;
             }
             if (!best) { this.uiStatus.textContent = '💡 找不到可走的棋了。'; return; }
-            this._hint = { fen, from: best.from, to: best.to };
+            /* 對方吃得回來嗎?走一步看對方有沒有落在同一格的吃子,再退回。給文案用:
+               「白吃」和「會被回吃但整體划算」要講清楚,孩子才知道接下來會發生什麼。 */
+            let recap = false;
+            if (best.captured) {
+                try {
+                    this.chess.move(best);
+                    recap = this.chess.moves({ verbose: true }).some((m) => m.to === best.to && m.captured);
+                    this.chess.undo();
+                } catch (e) { recap = false; }
+            }
+            this._hint = { fen, from: best.from, to: best.to, recap };
             this.applyHint(this._hint);
         }, 0));
     }
@@ -242,7 +254,7 @@ class ChessGame {
             || { p: '兵', r: '城堡', n: '騎士', b: '主教', q: '皇后', k: '國王' };
         this.uiStatus.textContent = `💡 建議:${piece ? NAMES[piece.type] : '這顆'} `
             + `${hint.from} → ${hint.to}`
-            + (target ? `,吃掉對方的${NAMES[target.type]}` : '')
+            + (target ? `,吃掉對方的${NAMES[target.type]}` + (hint.recap ? '(對方會回吃,但這筆交換划算)' : '(白吃,對方吃不回來)') : '')
             + '(紫格就是要去的地方)';
     }
 

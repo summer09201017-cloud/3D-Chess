@@ -4,7 +4,7 @@
   "description": "",
   "main": "sw.js",
   "scripts": {
-    "test": "node test/daily.mjs"
+    "test": "node test/daily.mjs && node test/ai.mjs"
   },
   "repository": {
     "type": "git",
