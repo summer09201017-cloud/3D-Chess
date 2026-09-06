@@ -143,6 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const btnDaily = document.getElementById('btn-daily');
     if (btnDaily) btnDaily.addEventListener('click', () => openDaily(undefined, true));
+    /* 🔗 ?daily 深連結(0906,信友火花「今日挑戰」卡直達):等於代按「📅 每日殘局」;不彈說明框(題名與目標在狀態行看得到)。 */
+    if (/[?&]daily(?:=|&|$)/.test(location.search)) setTimeout(() => openDaily(undefined, false), 0);
 
     /* 結算框裡的兩顆(每日模式才顯示)——★ 由來:冒煙測試抓到「結算框蓋住每日鈕」,
        孩子解完一題接不到下一題,而框裡唯一的鈕會把他丟回一般對局。 */
