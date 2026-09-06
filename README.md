@@ -24,6 +24,12 @@
   ④最後一層不真走棋:SAN 尾巴 `#` 就是將死,其他用「子力 ± 吃子」算。38 局面差分測試分數逐一相同。
   ★ 剩下 92% 時間在 chess.js 自己的著法生成(每次都算 SAN),再快要換引擎。按下去先顯示「想一下…」再算(rAF → tick)。
 - ↩ 悔棋、💾 存檔/讀檔、⚙️ 設定、📱 安裝 APP(PWA)。
+- 🧭 **版面(2026-09-06~07,三場 session 接力)**:選單是貼底的 `#bottom-bar` 工具列(v4,以前被 `space-between` 擠到棋盤正中央);
+  📜 走步歷史是可摺疊側欄(v5,`body.dock-open` 撐開 `--dock-w`,畫布與 UI 層一起讓位,不是蓋上去;≤768px 藏起);
+  🏷️ 棋子頭上名牌 + 「🏷️ 棋名」開關鈕(v6,`board.js PIECE_LABEL_TEXT`,提示文字共用同一張表);
+  ⛶ 直向放大鈕(v7,`#controls-panel` 裡的一顆 `.btn`,對 `#game-container` 全螢幕、進出補發 resize)。
+- 🏷️ **棋名一律西洋棋叫法**:兵/騎士/主教/城堡/皇后/國王(2026-09-07 使用者拍板;名牌與提示同一張表,別另抄)。
+  ⚠ `js/puzzles.js` 的題名/提示(雙車梯殺、一支車就夠…)仍是 車/馬 字眼——那是與 `3d-chess-co` 共用的題庫正本,**待使用者拍板**要不要兩站一起改。
 
 ## 檔案
 
@@ -33,10 +39,17 @@
 | `js/game.js` `js/board.js` `js/ai.js` | 規則、棋盤渲染、AI |
 | `js/puzzles.js` | 每日殘局題庫 |
 | `js/save.js` `js/undo.js` `js/app.js` | 存檔、悔棋、接線 |
-| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v11'`(改殼層檔必 +1;v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速、v12 = 提示棋名對齊名牌) |
+| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v13'`(改殼層檔必 +1;v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速、v12 = 提示棋名對齊名牌、v13 = 直向放大鈕 + manifest orientation any)。⚠ 這個 repo 一天內被三場 session 接力改過,**bump 前先 `grep CACHE_NAME sw.js` 看現值**,別憑記憶(0907 有一場寫「sw v10」其實沒 bump) |
 | `manifest.json` / `icons/` | PWA |
 | `test/daily.mjs` | `npm test`:每日殘局資料檢查 |
 | `scripts/browser-check.mjs` | 真瀏覽器冒煙檢查 |
+
+## 現況(2026-09-07 深夜)
+
+- 線上 = `origin/main` = `177e368`(sw v13);`npm test` 63/0、線上 `browser-check` 26/0、零 pageerror。
+- 今天做完:v4 選單貼底 → v5 走步歷史側欄 → v6 名牌 + AI 提速 11 倍 → v7 放大鈕 → 提示棋名對齊(v12)。全部已部署、已驗線上。
+- 待使用者拍板:① `puzzles.js` 題名/提示的 車/馬 字眼要不要改(兩站共用題庫)。
+- 沒有進行中的工程;下一步看使用者。
 
 ## 跑起來 / 測試
 
