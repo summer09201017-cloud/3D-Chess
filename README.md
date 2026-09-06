@@ -25,11 +25,11 @@
 
 | 檔 | 用途 |
 |---|---|
-| `index.html` / `styles.css` | 殼層與版面 |
+| `index.html` / `styles.css` | 殼層與版面。★ **`#ui-layer` 不准用 `justify-content: space-between`**——流內只剩「header / 按鈕列 / 版本」三塊時,按鈕列會被擠到畫面垂直正中央,正好蓋在棋盤上而且擋掉點擊(2026-09-06 修)。選單一律放 `#bottom-bar`(`margin-top:auto` 貼底),而且只有 `.btn` 本身 `pointer-events:auto`,全寬容器不吃點擊 |
 | `js/game.js` `js/board.js` `js/ai.js` | 規則、棋盤渲染、AI |
 | `js/puzzles.js` | 每日殘局題庫 |
 | `js/save.js` `js/undo.js` `js/app.js` | 存檔、悔棋、接線 |
-| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v6'`(改殼層檔必 +1) |
+| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v9'`(改殼層檔必 +1;v9 = 選單搬到底部工具列) |
 | `manifest.json` / `icons/` | PWA |
 | `test/daily.mjs` | `npm test`:每日殘局資料檢查 |
 | `scripts/browser-check.mjs` | 真瀏覽器冒煙檢查 |

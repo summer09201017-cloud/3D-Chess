@@ -33,21 +33,29 @@
                 </div>
             </header>
 
-            <div id="controls-panel">
-                <button id="btn-daily" class="btn">📅 每日殘局</button>
-                <button id="btn-hint" class="btn" title="讓 AI 幫你想一手">💡 提示</button>
-                <button id="btn-undo" class="btn" disabled>↩ 悔棋</button>
-                <button id="btn-save-menu" class="btn">💾 存檔/讀檔</button>
-                <button id="btn-settings" class="btn">⚙️ 設定</button>
-                <button id="btn-install" class="btn hidden">📱 安裝 APP</button>
-            </div>
-            <p id="in-app-hint" class="hidden" style="font-size:13px;color:#ffd54f;max-width:340px;line-height:1.6;margin:8px 0 0"></p>
-
             <div id="history-panel">
                 <h3>走步歷史</h3>
                 <ol id="move-history"></ol>
             </div>
-            <p id="verTag" style="font-size:12px;opacity:.7;max-width:340px;line-height:1.6;margin:10px 0 0">版本 v3(2026-09-06)・🔗 <b>網址加 ?daily 直接開每日殘局</b>(信友火花「今日挑戰」卡點了就進今天的題,不用再按每日鈕)<br>前幾版:v2 📅 每日殘局:每天一組 5 題、全世界同一組,由易到難、N 步殺全部經過電腦證明,每題分開記最少步數(2026-08-31)・v1 3D 幻影西洋棋(對 AI 三檔/悔棋/存讀檔/PWA)</p>
+
+            <!-- ★ 底部工具列:選單一律貼底,絕不放在 #ui-layer 的垂直正中央(那裡是棋盤,2026-09-06 修) -->
+            <div id="bottom-bar">
+                <p id="in-app-hint" class="hidden"></p>
+
+                <div id="controls-panel">
+                    <button id="btn-daily" class="btn">📅 每日殘局</button>
+                    <button id="btn-hint" class="btn" title="讓 AI 幫你想一手">💡 提示</button>
+                    <button id="btn-undo" class="btn" disabled>↩ 悔棋</button>
+                    <button id="btn-save-menu" class="btn">💾 存檔/讀檔</button>
+                    <button id="btn-settings" class="btn">⚙️ 設定</button>
+                    <button id="btn-install" class="btn hidden">📱 安裝 APP</button>
+                </div>
+
+                <div id="verTag">
+                    <button id="btn-ver" type="button" aria-expanded="false" aria-controls="ver-detail">ⓘ 版本 v4</button>
+                    <div id="ver-detail" class="hidden">版本 v4(2026-09-06)・🧭 <b>選單搬離棋盤中央</b>——按鈕列改成貼著畫面底部的工具列,棋盤中間不再被一條半透明的鈕帶蓋住、底下的棋子也點得到了;版本簡歷收成「ⓘ 版本」小鈕,不再壓住棋盤<br>前幾版:v3 🔗 網址加 ?daily 直接開每日殘局(信友火花「今日挑戰」卡點了就進今天的題,不用再按每日鈕)・v2 📅 每日殘局:每天一組 5 題、全世界同一組,由易到難、N 步殺全部經過電腦證明,每題分開記最少步數(2026-08-31)・v1 3D 幻影西洋棋(對 AI 三檔/悔棋/存讀檔/PWA)</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -130,13 +138,24 @@
         addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') dwell() })
       })()
     </script>
-    <script src="js/puzzles.js?v=7" defer></script>
-    <script src="js/app.js?v=7" defer></script>
-    <script src="js/undo.js?v=7" defer></script>
-    <script src="js/save.js?v=7" defer></script>
-    <script src="js/ai.js?v=7" defer></script>
-    <script src="js/board.js?v=7" defer></script>
-    <script src="js/game.js?v=7" defer></script>
+    <script>
+      // ⓘ 版本簡歷:預設收起來(展開的長文會壓到棋盤),點一下才展開
+      document.addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('#btn-ver')
+        if (!b) return
+        var d = document.getElementById('ver-detail')
+        if (!d) return
+        var open = d.classList.toggle('hidden') === false
+        b.setAttribute('aria-expanded', open ? 'true' : 'false')
+      })
+    </script>
+    <script src="js/puzzles.js?v=8" defer></script>
+    <script src="js/app.js?v=8" defer></script>
+    <script src="js/undo.js?v=8" defer></script>
+    <script src="js/save.js?v=8" defer></script>
+    <script src="js/ai.js?v=8" defer></script>
+    <script src="js/board.js?v=8" defer></script>
+    <script src="js/game.js?v=8" defer></script>
 </body>
 
 </html>

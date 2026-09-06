@@ -58,14 +58,20 @@ body {
     /* 讓點擊穿透到 3D 畫布 */
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    padding: 20px;
+    /* ★ 絕不用 space-between:流內只剩「header / 按鈕列 / 版本」三塊時,按鈕列會被擠到
+       畫面垂直正中央 —— 那裡正好是棋盤(2026-09-06 修)。改成貼上、底部工具列自己 margin-top:auto */
+    justify-content: flex-start;
+    padding: 16px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+    gap: 8px;
 }
 
-/* 讓 UI 元素本身可以接收點擊 */
-#ui-layer header,
-#ui-layer #controls-panel,
-#ui-layer #history-panel {
+/* 讓 UI 元素本身可以接收點擊。
+   ★ header / 底部列都是「整條全寬」的容器 —— 若整條吃點擊,棋盤的上下緣就拖不動、點不到,
+     所以只有「真的能按的東西」才 pointer-events:auto。 */
+#ui-layer #history-panel,
+#ui-layer .btn,
+#ui-layer #btn-ver,
+#ui-layer #ver-detail {
     pointer-events: auto;
 }
 
@@ -125,12 +131,81 @@ h1 {
     }
 }
 
+/* 底部工具列(選單):貼著畫面底部,棋盤中間留白 */
+#bottom-bar {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+}
+
 #controls-panel {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
     justify-content: center;
-    margin-bottom: 20px;
+    /* 只包住按鈕本身,不做成全寬的一條 —— 免得整條蓋在棋盤上、又擋掉拖曳 */
+    width: fit-content;
+    max-width: 100%;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: rgba(15, 15, 27, 0.55);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    pointer-events: auto;
+}
+
+#in-app-hint {
+    font-size: 13px;
+    color: #ffd54f;
+    max-width: 340px;
+    line-height: 1.6;
+    margin: 0;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* ⓘ 版本簡歷:預設收成一顆小鈕(展開的長文以前壓在棋盤上) */
+#verTag {
+    display: flex;
+    /* reverse:小鈕永遠釘在最底下,展開的長文往上長 */
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+}
+
+#btn-ver {
+    background: rgba(15, 15, 27, 0.55);
+    color: var(--text-main);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    opacity: 0.75;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+#btn-ver:hover {
+    opacity: 1;
+}
+
+#ver-detail {
+    font-size: 12px;
+    line-height: 1.6;
+    max-width: min(640px, 100%);
+    max-height: 34vh;
+    overflow-y: auto;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(15, 15, 27, 0.88);
+    border: 1px solid var(--panel-border);
+    text-align: left;
 }
 
 /* 側邊走步歷史 */
@@ -294,7 +369,38 @@ select {
         font-size: 1rem;
     }
 
+    .btn {
+        padding: 7px 12px;
+        font-size: 0.85rem;
+    }
+}
+
+/* 矮視窗(手機橫向、縮小的筆電視窗):棋盤下緣離底部很近,工具列壓成一排 */
+@media (max-height: 640px) {
+    #ui-layer {
+        padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+        gap: 4px;
+    }
+
+    #bottom-bar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 6px;
+    }
+
     #controls-panel {
-        margin-bottom: 30px;
+        padding: 6px 10px;
+        gap: 6px;
+    }
+
+    .btn {
+        padding: 6px 10px;
+        font-size: 0.82rem;
+    }
+
+    #ver-detail {
+        max-height: 40vh;
     }
 }
