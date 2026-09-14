@@ -25,7 +25,13 @@ body {
     overflow: hidden;
     /* 防止滾動 */
     width: 100vw;
+    /* v13(2026-09-15 使用者 LINE 內建瀏覽器兩張截圖:整條工具列不見、也沒有出口):
+       WebView / 自訂分頁裡 100vh 是「連網址列一起算」的大視窗,比看得到的區域高,而 body overflow:hidden 又捲不到
+       ⇒ 貼底的 #bottom-bar 整條掉到畫面外。改成三層退路:100dvh(動態視窗)> JS 量到的 --app-h(visualViewport / innerHeight,
+       index.html 開頭一段小腳本每次 resize 都更新)> 100vh。 */
     height: 100vh;
+    height: 100dvh;
+    height: var(--app-h, 100dvh);
 }
 
 #game-container {

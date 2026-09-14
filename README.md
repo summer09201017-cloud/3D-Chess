@@ -17,6 +17,8 @@
 
 ## 功能
 
+- 🩹 **內建瀏覽器工具列掉出畫面(2026-09-15,v13 / sw v20)**:LINE 等 WebView 的 100vh 比可見區高、body overflow:hidden 捲不到 ⇒ #bottom-bar 整條在畫面外(使用者兩張截圖:沒選單、沒出口)。
+  body 高度改 `100dvh` → `var(--app-h)`(index.html 開頭小腳本用 visualViewport.height / innerHeight 量、resize 重量)→ 100vh 三層退路。
 - 📐 **手機棋盤再放大(2026-09-15,v12 / sw v19)**:直向藏 h1(≤768px)+ 開場角度改陡(`HOME_DIR_PORTRAIT` [0,13,7],`homeDir()` 依畫布寬<高選);
   橫向 ≤500px 高時 `#bottom-bar` 改成右欄 150px(`--tools-col`,`#canvas-container`/`#ui-layer` 讓位),`usableBand()` 只在工具列
   **橫向蓋到畫布**時才扣高度 ⇒ 帶 = 狀態列底 ~ 畫布底;fit margin 1.04 → 1.02。`check-mobile-layout.mjs` 同步(直向投影高 ≥250、橫向 ≥70% 畫布高)。
