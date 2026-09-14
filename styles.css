@@ -471,6 +471,13 @@ body.menu-folded #in-app-hint {
     }
 }
 
+/* 📱 手機轉橫(矮於 500px):標題「3D 幻影西洋棋」是裝飾,下棋中不需要 —— 藏掉它,可用帶多出約 40px(≈ 帶高的 15%),
+   fitCamera 量到帶變高就把棋盤放大。狀態列(輪到誰 / 提示文字)留著。(2026-09-14 使用者:「橫式的棋盤太小」) */
+@media (orientation: landscape) and (max-height: 500px) {
+    #ui-layer header h1 { display: none; }
+    #ui-layer header { padding: 4px 12px; }
+}
+
 /* 矮視窗(手機橫向、縮小的筆電視窗):棋盤下緣離底部很近,工具列壓成一排 */
 @media (max-height: 640px) {
     #ui-layer {

@@ -50,7 +50,7 @@
 | `js/save.js` `js/undo.js` `js/app.js` | 存檔、悔棋、接線 |
 | `js/fit.js` / `test/fit.mjs` | 📐 相機 fit 純數學(不依賴 three;`computeFit({fovDeg,W,H,bandTop,bandBottom,dir})` → 距離 + 注視點)與它的 Node 測試 |
 | `scripts/check-mobile-layout.mjs` | 🔬 `npm run check:layout`:直向不裁 / 橫向填滿 / 收起選單放大 + reload 記住 / 重置視角真拖曳回得去(24 項;`CHECK_URL=` 可驗線上) |
-| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v16'`(改殼層檔必 +1;v16 = 相機 fit + 收起選單 + 重置視角(+ js/fit.js 進快取)、v15 = 提示不建議等價交換(PST + SEE + 半兵門檻)、v14 = 題庫題名改城堡/騎士(兩站同步)、v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速、v12 = 提示棋名對齊名牌、v13 = 直向放大鈕 + manifest orientation any)。⚠ 這個 repo 一天內被三場 session 接力改過,**bump 前先 `grep CACHE_NAME sw.js` 看現值**,別憑記憶(0907 有一場寫「sw v10」其實沒 bump) |
+| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v17'`(改殼層檔必 +1;v17 = 手機橫向藏標題讓棋盤再大一點、v16 = 相機 fit + 收起選單 + 重置視角(+ js/fit.js 進快取)、v15 = 提示不建議等價交換(PST + SEE + 半兵門檻)、v14 = 題庫題名改城堡/騎士(兩站同步)、v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速、v12 = 提示棋名對齊名牌、v13 = 直向放大鈕 + manifest orientation any)。⚠ 這個 repo 一天內被三場 session 接力改過,**bump 前先 `grep CACHE_NAME sw.js` 看現值**,別憑記憶(0907 有一場寫「sw v10」其實沒 bump) |
 | `manifest.json` / `icons/` | PWA |
 | `test/daily.mjs` | `npm test`:每日殘局資料檢查 |
 | `scripts/browser-check.mjs` | 真瀏覽器冒煙檢查 |
@@ -58,7 +58,8 @@
 ## 現況(2026-09-14,HFP 機・0913-take-over 場)
 
 - 使用者四張實機截圖:「加上能將選單收起的功能,與有重置視角的功能,與手機版直式的棋盤被裁掉與手機版橫式的棋盤太小」
-  ⇒ 四件一次做完(v10 / sw v16):📐 相機 fit(js/fit.js + board.js fitCamera/usableBand)、🗂 收起選單、🎥 重置視角。
+  ⇒ 四件一次做完(v10 / sw v16→v17):📐 相機 fit(js/fit.js + board.js fitCamera/usableBand)、🗂 收起選單、🎥 重置視角;
+  v17 再把手機橫向(max-height 500)的裝飾標題 h1 藏掉,可用帶多 ~40px、棋盤再大一成半。
 - 驗收:`npm test` = daily + ai + **fit 24**;`check:layout` 24/0(直向 8 角在畫布寬內且在標題~工具列帶內、橫向填滿帶 ≥ 80%、
   收起後距離變近 + 棋盤變高 + reload 記住、真拖曳後重置回到開場差 < 0.05);`browser-check` 26/0(每日流程沒壞)。
 - ⚠ 全艦隊棋類稽核(0914):本站是**唯一**「收起選單手機不可用 + 沒有重置視角」的 3D 站,這輪補齊;
