@@ -17,6 +17,15 @@
 
 ## 功能
 
+- 📐 **相機照畫布 fit(2026-09-14,v10 / sw v16)**:`js/fit.js` 純數學(Node 可測)算「要退多遠、對準哪裡」——
+  8 角投影落在「標題列底 ~ 工具列頂」那條帶 × 全寬之內,注視點對準帶的中心。修掉使用者截圖的兩個病:
+  直向 a/h 兩路被切、橫向棋盤縮在中間一小塊(以前相機釘死在 (0,8,10))。`board.js` 的 `fitCamera()` 量真的 DOM
+  (`usableBand()`),resize / 收起選單 / 換邊都重算;`test/fit.mjs` 24 項守。
+- 🗂 **收起選單(2026-09-14)**:工具列上方「▼ 收起選單」藥丸鈕 → `body.menu-folded` 藏掉 `#controls-panel` / `#verTag`,
+  補一發 resize ⇒ 棋盤照多出來的空間放大;狀態記 `localStorage('chess3d.menuFolded')`。
+- 🎥 **重置視角(2026-09-14)**:`#btn-camera` → `board3d.resetCamera()`:target 歸零 + 沿這一方的開場方向重 fit;
+  先關一下 damping 讓 OrbitControls 把拖曳殘量清掉,不然重置完會再飄。`scripts/check-mobile-layout.mjs` 24 項守(真拖曳 → 重置 → 差 < 0.05)。
+
 - 📅 **每日殘局**:每天一組 5 題(2026-08-31,自 3d-chess-co 垂直搬運)。
 - 💡 **AI 提示**:借同一支 `getBestMove` 從玩家這邊算一手(2026-09-01)。**2026-09-07 v9 提示品質**:使用者退件「提示叫我吃、吃完被吃回=等價交換」。病因 ①只算子力 ⇒ 中局九成的手 0 分平手,而吃子排最前、同分不換人 ⇒ 等價交換永遠勝出;②深度 3 是奇數層,「我吃→他回吃→我再吃」看起來賺、第 4 步被吃回看不到(horizon)。修法:`js/ai.js` 加 PST 位置分(Michniewski 表 ÷10)、葉子吃子用 SEE(swap-list,含 x-ray)算到底、提示走 `getBestMove(chess,'hard',{forHint:true})` ⇒ `searchRootForHint` 兩段式:先搜安靜手,吃子要多賺 `HINT_TRADE_MARGIN`=5(半個兵)才建議;AI 對手仍走 `searchRoot`。曾試過真的走棋算到底(quiescence):中局 5~24 秒,不可用。測試 `test/ai.mjs`(12 項:手工陷阱局面 + 30 隨機中局用獨立裁判 refQuiesce 驗「不虧」+ 耗時 <3s;實測平均 0.5s、最慢 1.2s)。2026-09-07 提速 11 倍(中局 5.2s → 0.46s):
   ①走法先排序(MVV-LVA)再搜,alpha-beta 才剪得到 ②根層也收窄視窗 ③終局用「沒棋可走」判,不在每個葉子呼叫
@@ -39,10 +48,21 @@
 | `js/game.js` `js/board.js` `js/ai.js` | 規則、棋盤渲染、AI |
 | `js/puzzles.js` | 每日殘局題庫 |
 | `js/save.js` `js/undo.js` `js/app.js` | 存檔、悔棋、接線 |
-| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v15'`(改殼層檔必 +1;v15 = 提示不建議等價交換(PST + SEE + 半兵門檻)、v14 = 題庫題名改城堡/騎士(兩站同步)、v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速、v12 = 提示棋名對齊名牌、v13 = 直向放大鈕 + manifest orientation any)。⚠ 這個 repo 一天內被三場 session 接力改過,**bump 前先 `grep CACHE_NAME sw.js` 看現值**,別憑記憶(0907 有一場寫「sw v10」其實沒 bump) |
+| `js/fit.js` / `test/fit.mjs` | 📐 相機 fit 純數學(不依賴 three;`computeFit({fovDeg,W,H,bandTop,bandBottom,dir})` → 距離 + 注視點)與它的 Node 測試 |
+| `scripts/check-mobile-layout.mjs` | 🔬 `npm run check:layout`:直向不裁 / 橫向填滿 / 收起選單放大 + reload 記住 / 重置視角真拖曳回得去(24 項;`CHECK_URL=` 可驗線上) |
+| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v16'`(改殼層檔必 +1;v16 = 相機 fit + 收起選單 + 重置視角(+ js/fit.js 進快取)、v15 = 提示不建議等價交換(PST + SEE + 半兵門檻)、v14 = 題庫題名改城堡/騎士(兩站同步)、v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速、v12 = 提示棋名對齊名牌、v13 = 直向放大鈕 + manifest orientation any)。⚠ 這個 repo 一天內被三場 session 接力改過,**bump 前先 `grep CACHE_NAME sw.js` 看現值**,別憑記憶(0907 有一場寫「sw v10」其實沒 bump) |
 | `manifest.json` / `icons/` | PWA |
 | `test/daily.mjs` | `npm test`:每日殘局資料檢查 |
 | `scripts/browser-check.mjs` | 真瀏覽器冒煙檢查 |
+
+## 現況(2026-09-14,HFP 機・0913-take-over 場)
+
+- 使用者四張實機截圖:「加上能將選單收起的功能,與有重置視角的功能,與手機版直式的棋盤被裁掉與手機版橫式的棋盤太小」
+  ⇒ 四件一次做完(v10 / sw v16):📐 相機 fit(js/fit.js + board.js fitCamera/usableBand)、🗂 收起選單、🎥 重置視角。
+- 驗收:`npm test` = daily + ai + **fit 24**;`check:layout` 24/0(直向 8 角在畫布寬內且在標題~工具列帶內、橫向填滿帶 ≥ 80%、
+  收起後距離變近 + 棋盤變高 + reload 記住、真拖曳後重置回到開場差 < 0.05);`browser-check` 26/0(每日流程沒壞)。
+- ⚠ 全艦隊棋類稽核(0914):本站是**唯一**「收起選單手機不可用 + 沒有重置視角」的 3D 站,這輪補齊;
+  其餘缺項見 skills repo HANDOFF 0914 ★段。
 
 ## 現況(2026-09-07 深夜)
 

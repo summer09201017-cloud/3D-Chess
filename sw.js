@@ -1,9 +1,10 @@
-const CACHE_NAME = 'chess3d-v15';
+const CACHE_NAME = 'chess3d-v16';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
   './manifest.json',
+  './js/fit.js',
   './js/app.js',
   './js/puzzles.js',
   './js/board.js',

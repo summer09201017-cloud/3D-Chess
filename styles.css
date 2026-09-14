@@ -423,6 +423,21 @@ select {
     display: none !important;
 }
 
+/* 🗂 收起 / 展開選單(2026-09-14 使用者要求)。收起時整條工具列 + 版本鈕都藏掉,只剩這顆小藥丸鈕;
+   fitCamera 讀 #bottom-bar 的實際高度重算 ⇒ 棋盤照多出來的空間放大。 */
+.fold-btn {
+    padding: 3px 12px;
+    font-size: 0.78rem;
+    border-radius: 999px;
+    opacity: 0.85;
+    background: rgba(15, 15, 27, 0.55);
+}
+body.menu-folded #controls-panel,
+body.menu-folded #verTag,
+body.menu-folded #in-app-hint {
+    display: none !important;
+}
+
 /* 桌機/平板橫向:側欄展開時棋盤讓位。窄螢幕 --dock-w 永遠是 0,棋盤不會被擠扁 */
 @media (min-width: 769px) {
     body.dock-open {

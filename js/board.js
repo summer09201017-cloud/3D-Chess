@@ -11,6 +11,8 @@ const PIECE_LABEL_TEXT = { p: '兵', r: '城堡', n: '騎士', b: '主教', q: '
 // 每種棋子頭頂的高度(棋子本體最高點再往上留一點空隙;數值對應 createPieceMesh 裡各型的實際高度)
 const PIECE_LABEL_Y = { p: 1.02, r: 1.28, n: 1.33, b: 1.47, q: 1.54, k: 1.60 };
 const PIECE_LABEL_KEY = 'chess3d.pieceLabels';
+/** js/fit.js 掛在 window.ChessFit(classic script,Node 測試走 module.exports);沒載到就不 fit、照舊畫 */
+function root_ChessFit() { return (typeof window !== 'undefined' && window.ChessFit) ? window.ChessFit : null; }
 
 class ChessBoard3D {
     constructor(containerId) {
@@ -39,6 +41,12 @@ class ChessBoard3D {
         this.controls.minDistance = 5;
         this.controls.maxDistance = 20;
         this.controls.target.set(0, 0, 0);
+
+        /* 🎥 開場方向(白方 / 黑方各一個;只有方向有意義,距離由 fitCamera 照畫布算)。
+           以前相機釘死在 (0,8,10) ⇒ 直向 a/h 兩路被切、橫向棋盤縮在 UI 之間一小塊(2026-09-14 使用者兩張截圖退件)。 */
+        this.side = 'w';
+        this.HOME_DIR = { w: [0, 8, 10], b: [0, 8, -10] };
+        this.fitCamera();
 
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
@@ -418,6 +426,70 @@ class ChessBoard3D {
         this.camera.aspect = this.width / this.height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(this.width, this.height);
+        /* ⚠ 只改 aspect 不夠:長寬比一變、UI 蓋掉的帶一變,「要退多遠才裝得下」也變了。
+             保留使用者轉到的角度,只重算距離與注視點。 */
+        this.fitCamera({ keepDirection: true });
+    }
+
+    /* 📐 可用帶:畫布上「沒被標題列 / 底部工具列蓋住」的那一段(px,相對畫布頂)。
+       量真的 DOM,不猜常數 —— 直向時工具列會換行變高、收起選單時變矮,每次都不一樣。 */
+    usableBand() {
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        let top = 0, bottom = rect.height;
+        try {
+            const header = document.querySelector('#ui-layer header');
+            if (header && header.offsetParent !== null) {
+                const h = header.getBoundingClientRect();
+                if (h.height > 0) top = Math.max(top, h.bottom - rect.top);
+            }
+            const bar = document.getElementById('bottom-bar');
+            if (bar && bar.offsetParent !== null) {
+                const b = bar.getBoundingClientRect();
+                if (b.height > 0) bottom = Math.min(bottom, b.top - rect.top);
+            }
+        } catch (e) { /* 量不到就當整個畫布 */ }
+        return { top, bottom, W: rect.width, H: rect.height };
+    }
+
+    /* 📐 相機照「畫布長寬比 + UI 蓋掉多少」算距離與注視點(純數學在 js/fit.js,Node 有測試)。
+       keepDirection=true(轉向 / 收起選單時):保留使用者轉到的角度,只重算距離與注視點。 */
+    fitCamera(opts) {
+        const keepDirection = !!(opts && opts.keepDirection);
+        if (!root_ChessFit()) return null;
+        const band = this.usableBand();
+        if (!band.W || !band.H) return null;
+        let dir;
+        if (keepDirection) {
+            const v = this.camera.position.clone().sub(this.controls.target);
+            dir = v.lengthSq() > 1e-6 ? [v.x, v.y, v.z] : this.HOME_DIR[this.side];
+        } else {
+            dir = this.HOME_DIR[this.side] || this.HOME_DIR.w;
+        }
+        const fit = root_ChessFit().computeFit({
+            fovDeg: this.camera.fov, W: band.W, H: band.H,
+            bandTop: band.top, bandBottom: band.bottom, dir,
+        });
+        this.controls.target.set(fit.target[0], fit.target[1], fit.target[2]);
+        this.camera.position.set(fit.camera[0], fit.camera[1], fit.camera[2]);
+        /* ⚠ maxDistance 比算出來的距離小的話,controls.update() 會把相機拉回來 ⇒ 又切到邊(直向要 23+,原上限 20) */
+        this.controls.maxDistance = Math.max(20, fit.dist * 1.3);
+        this.camera.lookAt(this.controls.target);
+        this.controls.update();
+        this._lastFit = fit;
+        return fit;
+    }
+
+    /* 🎥 重置視角(2026-09-14 使用者要求):鏡頭回到這一方的開場角度,連注視點一起歸位。
+       ⚠ 一定要連 target 一起 —— 兩指平移會把注視點拖走,只搬相機位置會變成「從新位置看著被拖歪的中心」。 */
+    resetCamera() {
+        this.controls.target.set(0, 0, 0);
+        /* ⚠ 阻尼(enableDamping)會把上一次拖曳「還沒吃完的殘量」在之後幾幀繼續套用 ⇒ 重置完又飄開一小段。
+             OrbitControls.update() 在 enableDamping=false 時會把 sphericalDelta / panOffset 歸零 —— 借這一下清乾淨再開回來。 */
+        const damping = this.controls.enableDamping;
+        this.controls.enableDamping = false;
+        this.controls.update();
+        this.controls.enableDamping = damping;
+        this.fitCamera();
     }
 
     onPointerClick(event) {
@@ -447,13 +519,9 @@ class ChessBoard3D {
     }
 
     setCameraSide(color) {
-        if (color === 'w') {
-            this.camera.position.set(0, 8, 10);
-        } else {
-            this.camera.position.set(0, 8, -10);
-        }
-        this.camera.lookAt(0, 0, 0);
-        this.controls.update();
+        this.side = color === 'b' ? 'b' : 'w';
+        this.controls.target.set(0, 0, 0);
+        this.fitCamera();      // 方向 = 這一方的開場方向,距離照畫布算(以前寫死 (0,±8,10))
     }
 
     highlightSquare(square, colorHex = 0xffff00) {

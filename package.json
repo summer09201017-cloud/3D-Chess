@@ -4,7 +4,8 @@
   "description": "",
   "main": "sw.js",
   "scripts": {
-    "test": "node test/daily.mjs && node test/ai.mjs"
+    "test": "node test/daily.mjs && node test/ai.mjs && node test/fit.mjs",
+    "check:layout": "node scripts/check-mobile-layout.mjs"
   },
   "repository": {
     "type": "git",

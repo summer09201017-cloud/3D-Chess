@@ -95,6 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnHint = document.getElementById('btn-hint');
     if (btnHint) btnHint.addEventListener('click', () => window.chessGame.showHint());
 
+    // 🎥 重置視角(2026-09-14 使用者要求):回到這一方的開場角度,連注視點一起歸位
+    const btnCamera = document.getElementById('btn-camera');
+    if (btnCamera) btnCamera.addEventListener('click', () => window.chessGame.board3d.resetCamera());
+
     // 🏷️ 棋名標籤開關(2026-09-07):使用者回報「不知道哪個棋是哪個長相」,預設開、關掉會記住。
     //    ★ 狀態寫在鈕的文字上,不是只靠 title —— 手機沒有 hover,tooltip 等於隱形。
     const btnLabels = document.getElementById('btn-labels');
