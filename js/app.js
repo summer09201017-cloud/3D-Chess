@@ -26,12 +26,9 @@ if (IN_APP_BROWSER && installBtn) {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        // 清除舊的 SW cache 後重新註冊
-        if (caches) {
-            caches.keys().then(names => {
-                names.forEach(name => caches.delete(name));
-            });
-        }
+        /* ⚠ 2026-09-14 拿掉這裡原本的 `caches.keys().forEach(delete)`:它每次載入都把**現役**快取也砍光,
+           離線永遠是空的;舊版快取的清理本來就是 sw.js 的 activate 在做(只砍名字不同的)。
+           這條是「裝成 App 打開 ERR_FAILED」三個病因之一,細節見 sw.js 檔頭。 */
         navigator.serviceWorker.register('./sw.js')
             .then(reg => console.log('SW registered'))
             .catch(err => console.error('SW failed', err));

@@ -50,10 +50,24 @@
 | `js/save.js` `js/undo.js` `js/app.js` | 存檔、悔棋、接線 |
 | `js/fit.js` / `test/fit.mjs` | 📐 相機 fit 純數學(不依賴 three;`computeFit({fovDeg,W,H,bandTop,bandBottom,dir})` → 距離 + 注視點)與它的 Node 測試 |
 | `scripts/check-mobile-layout.mjs` | 🔬 `npm run check:layout`:直向不裁 / 橫向填滿 / 收起選單放大 + reload 記住 / 重置視角真拖曳回得去(24 項;`CHECK_URL=` 可驗線上) |
-| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v17'`(改殼層檔必 +1;v17 = 手機橫向藏標題讓棋盤再大一點、v16 = 相機 fit + 收起選單 + 重置視角(+ js/fit.js 進快取)、v15 = 提示不建議等價交換(PST + SEE + 半兵門檻)、v14 = 題庫題名改城堡/騎士(兩站同步)、v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速、v12 = 提示棋名對齊名牌、v13 = 直向放大鈕 + manifest orientation any)。⚠ 這個 repo 一天內被三場 session 接力改過,**bump 前先 `grep CACHE_NAME sw.js` 看現值**,別憑記憶(0907 有一場寫「sw v10」其實沒 bump) |
+| `test/sw.mjs` / `scripts/check-sw-nav.mjs` | 🔬 sw 離線韌性(假 caches 環境 15 項)+ 線上重演「開 /index.html 兩次 + 斷網」(`npm run check:sw`,對線上跑才有 308) |
+| `sw.js` | Service Worker,`CACHE_NAME = 'chess3d-v18'`(改殼層檔必 +1;**v18 = 修「裝成 App 打開 ERR_FAILED」:名單不放 ./index.html、逐一 add、導覽回殼層並洗掉 redirected、ignoreSearch;manifest start_url → ./ 並明寫 id;app.js 不再載入就砍快取**、v17 = 手機橫向藏標題讓棋盤再大一點、v16 = 相機 fit + 收起選單 + 重置視角(+ js/fit.js 進快取)、v15 = 提示不建議等價交換(PST + SEE + 半兵門檻)、v14 = 題庫題名改城堡/騎士(兩站同步)、v9 = 選單搬到底部工具列、v10 = 走步歷史可摺疊側欄、v11 = 棋子名牌 + 提示提速、v12 = 提示棋名對齊名牌、v13 = 直向放大鈕 + manifest orientation any)。⚠ 這個 repo 一天內被三場 session 接力改過,**bump 前先 `grep CACHE_NAME sw.js` 看現值**,別憑記憶(0907 有一場寫「sw v10」其實沒 bump) |
 | `manifest.json` / `icons/` | PWA |
 | `test/daily.mjs` | `npm test`:每日殘局資料檢查 |
 | `scripts/browser-check.mjs` | 真瀏覽器冒煙檢查 |
+
+## 現況(2026-09-14 晚,HFP 機・0913-take-over 場)—— 🩹 裝成 App 打開 ERR_FAILED 修好(v11 / sw v18)
+
+- 使用者實機截圖:`https://3dchess-an.pages.dev/index.html` 無法連上 / ERR_FAILED(開安裝好的 App)。
+- **真因**(和 3D-Xiangqi 0908 同族,那站早修、這站漏了):Cloudflare Pages 把 `/index.html` **308** 到 `/`;`ASSETS_TO_CACHE` 有 `./index.html`
+  ⇒ install 存進去的是 `redirected:true` 的回應;manifest `start_url` 又是 `./index.html` ⇒ 開 App 的導覽拿到轉址過的快取回應
+  ⇒ 瀏覽器規定導覽不准用 redirected 回應 ⇒ ERR_FAILED。每次 SW 版號一 bump(=每次部署)就重新踩一次。
+  另兩個共犯:`cache.addAll` 全部或全無;`app.js` 每次載入 `caches.keys().forEach(delete)` 連現役快取一起砍。
+- **修法**:`sw.js` 重寫(名單不放 index.html、逐一 add+catch、導覽專用分支網路優先 → 殼層 `./` 退路、`sanitize()` 洗掉 redirected、
+  資產比對 `ignoreSearch`);`manifest.json` `start_url: "./"` + `id: "./index.html"`(保留舊 id,已裝的 App 才認得是同一支);
+  `app.js` 拿掉砍快取那段。`test/sw.mjs` 15 項守這五件;`scripts/check-sw-nav.mjs` 對線上重演「開 /index.html 兩次 + 斷網」。
+- ⚠ 已裝的 App:舊 SW(v17)還在時第一次開可能仍失敗一次;用瀏覽器開一次 `/`(SW 更新到 v18 後接手)或移除重裝即可。
+- ⚠ 通則入 skill:**start_url 與快取名單都不要寫 index.html**,Pages 會 308;三站象棋/暗棋/五子棋/圍棋都是 `./`,只有本站踩到。
 
 ## 現況(2026-09-14,HFP 機・0913-take-over 場)
 
