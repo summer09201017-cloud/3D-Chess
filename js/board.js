@@ -448,9 +448,15 @@ class ChessBoard3D {
             const bar = document.getElementById('bottom-bar');
             if (bar && bar.offsetParent !== null) {
                 const b = bar.getBoundingClientRect();
-                /* v12:手機橫向工具列在**右欄**(不蓋到畫布)⇒ 不扣它的高度;只有它橫向壓在畫布上才扣 */
+                /* v12:手機橫向工具列在**右欄**(不蓋到畫布)⇒ 不扣它的高度;只有它橫向壓在畫布上才扣。
+                   v14:壓在畫布**上半**的(橫向收起選單後只剩右上角的「▲ 展開選單」藥丸)當**上界**,不是下界——
+                   當下界會把帶切成 0、整個退回全畫布,棋盤就躲到狀態列底下。 */
                 const overlapsX = b.left < rect.right - 1 && b.right > rect.left + 1;
-                if (b.height > 0 && overlapsX) bottom = Math.min(bottom, b.top - rect.top);
+                if (b.height > 0 && overlapsX) {
+                    const inUpperHalf = b.top - rect.top < rect.height / 2;
+                    if (inUpperHalf) top = Math.max(top, b.bottom - rect.top);
+                    else bottom = Math.min(bottom, b.top - rect.top);
+                }
             }
         } catch (e) { /* 量不到就當整個畫布 */ }
         return { top, bottom, W: rect.width, H: rect.height };

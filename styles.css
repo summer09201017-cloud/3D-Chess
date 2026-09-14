@@ -504,6 +504,15 @@ body.menu-folded #in-app-hint {
        手機橫向沒有空間放它 ⇒ 跟 ≤768px 一樣藏掉 */
     #history-dock { display: none; }
     #verTag { align-items: center; }
+
+    /* v14(2026-09-15 使用者截圖:「橫式收起選單後,右方原選單處一片空白,應該要棋盤置中與放大」):
+       收起就把右欄還給畫布(right:0)⇒ 棋盤重 fit 後置中;右欄只剩「▲ 展開選單」藥丸,改成貼右上角的小浮層。
+       狀態列同時壓薄(padding/字級),可用帶再高一點 ⇒ 棋盤再大一點。
+       board.js usableBand():貼在畫布上半的浮層(這顆藥丸)當「上界」處理,不會把帶切成 0。 */
+    body.menu-folded #canvas-container, body.menu-folded #ui-layer { right: 0; }
+    body.menu-folded #bottom-bar { width: auto; padding: 6px 8px; background: transparent; }
+    body.menu-folded #ui-layer header { padding: 2px 12px; }
+    body.menu-folded .status-panel { font-size: 0.95rem; }
 }
 
 /* 矮視窗(手機橫向、縮小的筆電視窗):棋盤下緣離底部很近,工具列壓成一排 */

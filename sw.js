@@ -10,7 +10,7 @@
 //       ⇒ 逐一 add + catch,抓不到的略過。
 //    ③ app.js 每次載入 `caches.keys().forEach(delete)` 把**現役**快取也砍光(舊腳手架留下的)⇒ 離線永遠是空的。⇒ 已移除,舊版清理交給 activate。
 //    另外:js 用 `?v=N` 破快取,而 install 存的是不帶 query 的鍵 ⇒ 比對要 ignoreSearch,不然離線一個 js 都對不上。
-const CACHE_NAME = 'chess3d-v20';
+const CACHE_NAME = 'chess3d-v21';
 
 // 導覽退路:離線 / 出事時回這份殼層(⚠ 只存 `./`,不存 `./index.html` —— 見上面 ①)
 const SHELL = './';

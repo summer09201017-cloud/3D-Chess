@@ -55,8 +55,10 @@ const geo = (page) => page.evaluate(() => {
     const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
     return {
         cv: { left: cv.left, right: cv.right, top: cv.top, bottom: cv.bottom, w: cv.width, h: cv.height },
-        /* v12:工具列在右欄(不蓋畫布)時不算帶的下界 —— 跟 board.js usableBand() 同一條規則 */
-        headerBottom: header.bottom, barTop: (bar.left < cv.right - 1 && bar.right > cv.left + 1) ? bar.top : cv.bottom, barH: bar.height,
+        /* v12/v14:跟 board.js usableBand() 同一條規則 —— 工具列不蓋畫布就不算;蓋在上半的當上界(收起後的藥丸),蓋在下半的當下界 */
+        headerBottom: Math.max(header.bottom, (bar.left < cv.right - 1 && bar.right > cv.left + 1 && bar.top - cv.top < cv.height / 2) ? bar.bottom : 0),
+        barTop: (bar.left < cv.right - 1 && bar.right > cv.left + 1 && bar.top - cv.top >= cv.height / 2) ? bar.top : cv.bottom, barH: bar.height,
+        canvasCenterX: cv.left + cv.width / 2,
         minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys),
         cam: b.camera.position.toArray().map((v) => +v.toFixed(3)),
         target: b.controls.target.toArray().map((v) => +v.toFixed(3)),
@@ -106,6 +108,9 @@ let landscapeOpenDist = null;
     ok(f.barH < g.barH - 20, `★ 底部列變矮(${g.barH.toFixed(0)} → ${f.barH.toFixed(0)}px)`);
     ok(insideBand(f), "★ 收起後棋盤仍全在帶內(沒被藥丸鈕蓋到)", JSON.stringify(f));
     ok((f.maxY - f.minY) >= (g.maxY - g.minY) - 1, `★ 收起後棋盤不變小(${(g.maxY - g.minY).toFixed(0)} → ${(f.maxY - f.minY).toFixed(0)}px;v12 右欄版面已滿高)`);
+    /* v14 使用者截圖:收起後右欄空白、棋盤偏左 ⇒ 收起要釋放右欄、棋盤置中(投影框中心對到整個視窗中心 ±12px) */
+    ok(f.cv.w >= 840, `★★ v14 收起後畫布拿回整個寬度(${f.cv.w.toFixed(0)}px)`);
+    ok(Math.abs((f.minX + f.maxX) / 2 - f.canvasCenterX) <= 12, `★★ v14 收起後棋盤置中(中心差 ${Math.abs((f.minX + f.maxX) / 2 - f.canvasCenterX).toFixed(0)}px)`);
     ok((g.maxY - g.minY) / g.cv.h >= 0.7, `★★ v12 橫向棋盤投影高 ≥ 70% 畫布高(${(((g.maxY - g.minY) / g.cv.h) * 100).toFixed(0)}%;v11 約 50%)`);
     ok((await page.locator("#btn-fold").textContent()).includes("展開"), "藥丸鈕文字改成「展開」");
     // reload 記得住
