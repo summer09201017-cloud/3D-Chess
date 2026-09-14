@@ -46,6 +46,9 @@ class ChessBoard3D {
            以前相機釘死在 (0,8,10) ⇒ 直向 a/h 兩路被切、橫向棋盤縮在 UI 之間一小塊(2026-09-14 使用者兩張截圖退件)。 */
         this.side = 'w';
         this.HOME_DIR = { w: [0, 8, 10], b: [0, 8, -10] };
+        /* v12(2026-09-15 使用者:「直式棋盤能再放大嗎」):直向被**寬度**卡住,俯角越平投影越扁(越矮)。
+           直向開場改較陡的角度(仰角 39° → 62°;54° 時投影高 310px、62° 約 340px,再陡棋子就快變平面圖了),同一個寬度下棋盤在螢幕上更高、格子更大;橫向維持原角度(那邊是高度卡住,陡了反而變小)。 */
+        this.HOME_DIR_PORTRAIT = { w: [0, 13, 7], b: [0, 13, -7] };
         this.fitCamera();
 
         this.raycaster = new THREE.Raycaster();
@@ -445,7 +448,9 @@ class ChessBoard3D {
             const bar = document.getElementById('bottom-bar');
             if (bar && bar.offsetParent !== null) {
                 const b = bar.getBoundingClientRect();
-                if (b.height > 0) bottom = Math.min(bottom, b.top - rect.top);
+                /* v12:手機橫向工具列在**右欄**(不蓋到畫布)⇒ 不扣它的高度;只有它橫向壓在畫布上才扣 */
+                const overlapsX = b.left < rect.right - 1 && b.right > rect.left + 1;
+                if (b.height > 0 && overlapsX) bottom = Math.min(bottom, b.top - rect.top);
             }
         } catch (e) { /* 量不到就當整個畫布 */ }
         return { top, bottom, W: rect.width, H: rect.height };
@@ -461,13 +466,14 @@ class ChessBoard3D {
         let dir;
         if (keepDirection) {
             const v = this.camera.position.clone().sub(this.controls.target);
-            dir = v.lengthSq() > 1e-6 ? [v.x, v.y, v.z] : this.HOME_DIR[this.side];
+            dir = v.lengthSq() > 1e-6 ? [v.x, v.y, v.z] : this.homeDir();
         } else {
-            dir = this.HOME_DIR[this.side] || this.HOME_DIR.w;
+            dir = this.homeDir();
         }
         const fit = root_ChessFit().computeFit({
             fovDeg: this.camera.fov, W: band.W, H: band.H,
             bandTop: band.top, bandBottom: band.bottom, dir,
+            margin: 1.02,   // v12:餘裕 4% → 2%(兩邊各多 1% 給棋盤)
         });
         this.controls.target.set(fit.target[0], fit.target[1], fit.target[2]);
         this.camera.position.set(fit.camera[0], fit.camera[1], fit.camera[2]);
@@ -477,6 +483,12 @@ class ChessBoard3D {
         this.controls.update();
         this._lastFit = fit;
         return fit;
+    }
+
+    /** 開場方向:直向畫布(寬 < 高)用較陡的那組,其餘用原本的(v12) */
+    homeDir() {
+        const table = (this.width < this.height && this.HOME_DIR_PORTRAIT) ? this.HOME_DIR_PORTRAIT : this.HOME_DIR;
+        return table[this.side] || table.w;
     }
 
     /* 🎥 重置視角(2026-09-14 使用者要求):鏡頭回到這一方的開場角度,連注視點一起歸位。

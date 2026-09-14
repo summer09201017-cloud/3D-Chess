@@ -457,8 +457,10 @@ body.menu-folded #in-app-hint {
         gap: 10px;
     }
 
+    /* v12(2026-09-15 使用者:「手機版直式與橫式的棋盤能再放大嗎」):標題「3D 幻影西洋棋」是裝飾,手機上直接藏——
+       直向的可用帶多出約 40px,fitCamera 量到帶變高就把棋盤放大(橫向那條 500px 規則本來就藏了,這裡補直向)。 */
     h1 {
-        font-size: 1.2rem;
+        display: none;
     }
 
     .status-panel {
@@ -476,6 +478,26 @@ body.menu-folded #in-app-hint {
 @media (orientation: landscape) and (max-height: 500px) {
     #ui-layer header h1 { display: none; }
     #ui-layer header { padding: 4px 12px; }
+
+    /* v12:手機橫向工具列改**右欄**(150px),畫布與 UI 層讓出右邊 ⇒ 可用帶從「狀態列底 ~ 工具列頂」(約 240px)
+       變成「狀態列底 ~ 畫布底」(約 350px),棋盤照帶重 fit 就大了一半。board.js usableBand() 只在工具列
+       **橫向蓋到畫布**時才扣它的高度(右欄不蓋 ⇒ 不扣)。收起選單時右欄跟著縮短(height:auto),不釋放寬度——
+       棋盤是被高度卡住的,釋放寬度也不會更大。 */
+    :root { --tools-col: 150px; }
+    #canvas-container, #ui-layer { right: var(--tools-col); }
+    #bottom-bar {
+        position: fixed; right: 0; top: 0; width: var(--tools-col); height: auto; max-height: 100%;
+        box-sizing: border-box; margin: 0; padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px)) 6px;
+        flex-direction: column; flex-wrap: nowrap; justify-content: flex-start; align-items: stretch; gap: 6px;
+        overflow-y: auto; pointer-events: auto; z-index: 12;
+    }
+    #controls-panel { flex-direction: column; flex-wrap: nowrap; width: 100%; padding: 6px; gap: 6px; }
+    #controls-panel .btn { width: 100%; min-height: 40px; padding: 6px 4px; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #btn-fold { align-self: center; }
+    /* 走步歷史側欄(absolute right:10px, z 11)會壓在右欄工具列上、把「收起選單」鈕的點擊吃掉(check-mobile-layout 實測);
+       手機橫向沒有空間放它 ⇒ 跟 ≤768px 一樣藏掉 */
+    #history-dock { display: none; }
+    #verTag { align-items: center; }
 }
 
 /* 矮視窗(手機橫向、縮小的筆電視窗):棋盤下緣離底部很近,工具列壓成一排 */

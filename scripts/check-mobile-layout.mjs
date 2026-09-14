@@ -55,7 +55,8 @@ const geo = (page) => page.evaluate(() => {
     const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
     return {
         cv: { left: cv.left, right: cv.right, top: cv.top, bottom: cv.bottom, w: cv.width, h: cv.height },
-        headerBottom: header.bottom, barTop: bar.top, barH: bar.height,
+        /* v12:工具列在右欄(不蓋畫布)時不算帶的下界 —— 跟 board.js usableBand() 同一條規則 */
+        headerBottom: header.bottom, barTop: (bar.left < cv.right - 1 && bar.right > cv.left + 1) ? bar.top : cv.bottom, barH: bar.height,
         minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys),
         cam: b.camera.position.toArray().map((v) => +v.toFixed(3)),
         target: b.controls.target.toArray().map((v) => +v.toFixed(3)),
@@ -74,7 +75,8 @@ console.log("\n── ① 直向 390×844:棋盤不被裁、不躲在 UI 底下(
     ok(g.minY >= g.headerBottom - 1, `★ 上緣沒躲在標題列底下(棋盤頂 ${g.minY.toFixed(0)} ≥ 標題底 ${g.headerBottom.toFixed(0)})`);
     ok(g.maxY <= g.barTop + 1, `★ 下緣沒躲在工具列底下(棋盤底 ${g.maxY.toFixed(0)} ≤ 工具列頂 ${g.barTop.toFixed(0)})`);
     ok((g.maxX - g.minX) / g.cv.w >= 0.85, `★ 寬填滿 ≥ 85%(${(((g.maxX - g.minX) / g.cv.w) * 100).toFixed(0)}%)`);
-    ok(g.dist > 20, `直向鏡頭退到 ${g.dist}(舊版寫死 12.8 才會被切;maxDistance 已放寬)`, String(g.dist));
+    ok(g.dist > 14, `直向鏡頭退到 ${g.dist}(舊版寫死 12.8 才會被切;v12 改陡角後比 v10 的 20+ 近,但仍 > 14)`, String(g.dist));
+    ok((g.maxY - g.minY) >= 250, `★ v12 直向棋盤投影高 ≥ 250px(藏 h1 + 陡角;v11 約 210)(${(g.maxY - g.minY).toFixed(0)}px)`);
     ok(errors.length === 0, "直向零 pageerror", errors.join(" | "));
     await page.close();
 }
@@ -93,16 +95,18 @@ let landscapeOpenDist = null;
 
     console.log("\n── ③ 收起選單:工具列藏掉、鏡頭靠近、棋盤變高;再按展開;reload 記得住 ──");
     await page.click("#btn-fold");
+    /* v12:橫向工具列在右欄,棋盤已被高度卡滿 ⇒ 收起選單不會再變近;守「不會變遠」 */
     await page.waitForFunction((d0) => document.body.classList.contains("menu-folded")
-        && window.__phantom.game.board3d._lastFit.dist < d0 - 0.2, g.dist, { timeout: 5000 })
-        .then(() => ok(true, "★★ 按下去:body.menu-folded + 鏡頭距離變近(棋盤放大)"))
-        .catch(() => ok(false, "★★ 按下去:body.menu-folded + 鏡頭距離變近", "5 秒內沒發生"));
+        && window.__phantom.game.board3d._lastFit.dist <= d0 + 0.05, g.dist, { timeout: 5000 })
+        .then(() => ok(true, "★★ 按下去:body.menu-folded + 鏡頭距離不變遠(v12 右欄版面棋盤本來就滿)"))
+        .catch(() => ok(false, "★★ 按下去:body.menu-folded + 鏡頭距離不變遠", "5 秒內沒發生"));
     await page.waitForTimeout(300);
     const f = await geo(page);
     ok(!f.controlsVisible, "★ 工具列真的藏掉了(offsetParent null)");
     ok(f.barH < g.barH - 20, `★ 底部列變矮(${g.barH.toFixed(0)} → ${f.barH.toFixed(0)}px)`);
     ok(insideBand(f), "★ 收起後棋盤仍全在帶內(沒被藥丸鈕蓋到)", JSON.stringify(f));
-    ok((f.maxY - f.minY) > (g.maxY - g.minY) + 10, `★ 棋盤在畫面上真的變高(${(g.maxY - g.minY).toFixed(0)} → ${(f.maxY - f.minY).toFixed(0)}px)`);
+    ok((f.maxY - f.minY) >= (g.maxY - g.minY) - 1, `★ 收起後棋盤不變小(${(g.maxY - g.minY).toFixed(0)} → ${(f.maxY - f.minY).toFixed(0)}px;v12 右欄版面已滿高)`);
+    ok((g.maxY - g.minY) / g.cv.h >= 0.7, `★★ v12 橫向棋盤投影高 ≥ 70% 畫布高(${(((g.maxY - g.minY) / g.cv.h) * 100).toFixed(0)}%;v11 約 50%)`);
     ok((await page.locator("#btn-fold").textContent()).includes("展開"), "藥丸鈕文字改成「展開」");
     // reload 記得住
     await page.reload({ waitUntil: "domcontentloaded" });
