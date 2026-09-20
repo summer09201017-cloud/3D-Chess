@@ -17,6 +17,12 @@
 
 ## 功能
 
+- 🎥 **視角工具列與其他五款 3D 棋類長一樣(2026-09-20,v15 / sw v22)**:使用者拍板「兩邊都做。讓六款 3D 棋類的視角工具列長一樣:預設三段 + 滑桿微調 + 換邊 + 重置」。
+  工具列的「🎥 重置視角」改成「🎥 視角」,按下打開浮動面板 `#view-panel`(掛在 body、浮在畫布左上角,**不進 #bottom-bar** —— fitCamera 讀工具列高度算可用帶,塞進去棋盤會縮水):
+  三段預設(斜俯視 58° / 正俯視 88° / 對局視角 34°)+ 水平旋轉 0–359° 與俯視角度 20–88° 兩條滑桿 + 🔃 換邊(繞注視點轉 180°)+ 🎯 重置視角;拖棋盤時滑桿跟著動,離預設 1.5° 內那顆預設鈕亮起。
+  `js/view-kit.js` 是艦隊共用 UI(正本 `hfpc-claude-skills/plugins/hfpc-skills/skills/board3d-kit/assets/view-kit.js`,**這裡的複本不要改**,要改回 skills repo 改再複製);
+  `js/view-kit-init.js`(ES module)只做本站接線:`orbitAdapter`(up=+Y、maxPolarAngle 不變)、重置借 `board3d.resetCamera()`、換方(`setCameraSide`)後重抓 0°。
+  app.js 拿掉舊的「按 #btn-camera 就 resetCamera」(不然開面板會順手歸零)。`check:layout` 24 → **36** 項(+ 面板三顆預設／兩條滑桿、換邊後滑桿 180 且相機到對面、正俯視 88°、✕ 關閉)。
 - 📐 **橫向收起選單 ⇒ 釋放右欄、棋盤置中(2026-09-15,v14 / sw v21)**:`body.menu-folded` 在 ≤500px 橫向把 `#canvas-container`/`#ui-layer` right 歸 0、
   `#bottom-bar` 只剩藥丸貼右上;`usableBand()` 把「蓋在畫布上半的浮層」當上界(當下界會把帶切成 0)。check-mobile-layout 加「收起後畫布全寬 + 棋盤置中 ±12px」。
 - 🩹 **內建瀏覽器工具列掉出畫面(2026-09-15,v13 / sw v20)**:LINE 等 WebView 的 100vh 比可見區高、body overflow:hidden 捲不到 ⇒ #bottom-bar 整條在畫面外(使用者兩張截圖:沒選單、沒出口)。
@@ -55,6 +61,8 @@
 | `js/game.js` `js/board.js` `js/ai.js` | 規則、棋盤渲染、AI |
 | `js/puzzles.js` | 每日殘局題庫 |
 | `js/save.js` `js/undo.js` `js/app.js` | 存檔、悔棋、接線 |
+| `js/view-kit.js` | 🎥 艦隊共用「視角工具列」UI(預設三段 + 兩條滑桿 + 換邊 + 重置;正本在 skills repo 的 board3d-kit/assets,**複本不要改**) |
+| `js/view-kit-init.js` | 🎥 本站接線(ES module):等 board3d 就緒 → orbitAdapter → 建 `#view-panel` 浮動面板,由「🎥 視角」鈕開關;換方後重抓 0° |
 | `js/fit.js` / `test/fit.mjs` | 📐 相機 fit 純數學(不依賴 three;`computeFit({fovDeg,W,H,bandTop,bandBottom,dir})` → 距離 + 注視點)與它的 Node 測試 |
 | `scripts/check-mobile-layout.mjs` | 🔬 `npm run check:layout`:直向不裁 / 橫向填滿 / 收起選單放大 + reload 記住 / 重置視角真拖曳回得去(24 項;`CHECK_URL=` 可驗線上) |
 | `test/sw.mjs` / `scripts/check-sw-nav.mjs` | 🔬 sw 離線韌性(假 caches 環境 15 項)+ 線上重演「開 /index.html 兩次 + 斷網」(`npm run check:sw`,對線上跑才有 308) |

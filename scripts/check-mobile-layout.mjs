@@ -141,15 +141,39 @@ console.log("\n── ④ 重置視角:真拖曳轉走 ⇒ 按「🎥 重置視�
     const moved = await geo(page);
     const dCam = Math.hypot(...moved.cam.map((v, i) => v - home.cam[i]));
     ok(dCam > 0.5, `★ 拖曳後相機真的轉走了(位移 ${dCam.toFixed(2)})`, JSON.stringify({ home: home.cam, moved: moved.cam }));
-    ok(await page.locator("#btn-camera").count() === 1, "★ 工具列有「🎥 重置視角」鈕");
-    await page.click("#btn-camera");
+    ok(await page.locator("#btn-camera").count() === 1, "★ 工具列有「🎥 視角」鈕(v15 起是打開視角面板)");
+    await page.click("#btn-camera");                                   // 打開視角面板
+    await page.waitForSelector("#view-panel:not(.hidden) [data-vk-reset]", { timeout: 5000 });
+    ok(await page.locator("#view-panel [data-vk-view]").count() === 3, "★ 面板有三顆預設視角鈕(斜俯視／正俯視／對局視角)");
+    ok(await page.locator('#view-panel [data-vk-range="yaw"]').count() === 1
+        && await page.locator('#view-panel [data-vk-range="pitch"]').count() === 1, "★ 面板有水平旋轉 + 俯視角度兩條滑桿");
+    await page.click("#view-panel [data-vk-reset]");
     await page.waitForTimeout(700);   // 若阻尼殘量沒清乾淨,這 700ms 內會再飄走 —— 故意等過去再量
     const back = await geo(page);
     const dBack = Math.hypot(...back.cam.map((v, i) => v - home.cam[i]));
     const dTgt = Math.hypot(...back.target.map((v, i) => v - home.target[i]));
     ok(dBack < 0.05, `★★ 重置後相機回到開場位置(差 ${dBack.toFixed(3)})`, JSON.stringify({ home: home.cam, back: back.cam }));
     ok(dTgt < 0.05, `★ 注視點也回到開場(差 ${dTgt.toFixed(3)})`, JSON.stringify({ home: home.target, back: back.target }));
-    ok(errors.length === 0, "重置視角零 pageerror", errors.join(" | "));
+    /* v15(2026-09-20 六站統一):🔃 換邊 ⇒ 相機繞注視點轉 180°(相對注視點的 z 反號)、水平旋轉滑桿顯示 180 */
+    await page.click("#view-panel [data-vk-flip]");
+    await page.waitForTimeout(600);   // 補間 320ms + 餘裕
+    const flipped = await geo(page);
+    const yawVal = await page.locator('#view-panel [data-vk-range="yaw"]').inputValue();
+    ok(yawVal === "180", `★★ 按「🔃 換邊」後水平旋轉滑桿 = 180(${yawVal})`);
+    const relZHome = home.cam[2] - home.target[2], relZFlip = flipped.cam[2] - flipped.target[2];
+    ok(Math.abs(relZFlip + relZHome) < 0.3, `★ 換邊後相機真的到了對面(z 相對注視點 ${relZHome.toFixed(2)} → ${relZFlip.toFixed(2)})`);
+    /* 正俯視 88° ⇒ 相機幾乎在注視點正上方(up = +Y) */
+    await page.click('#view-panel [data-vk-view="flat"]');
+    await page.waitForTimeout(600);
+    const flat = await geo(page);
+    const fx = flat.cam[0] - flat.target[0], fy = flat.cam[1] - flat.target[1], fz = flat.cam[2] - flat.target[2];
+    const elev = Math.asin(fy / Math.hypot(fx, fy, fz)) * 180 / Math.PI;
+    ok(elev > 85, `★ 按「正俯視」後俯視角度 ${elev.toFixed(1)}°(要 > 85)`);
+    ok(await page.locator('#view-panel [data-vk-range="pitch"]').inputValue() === "88", "★ 俯視角度滑桿跟著顯示 88");
+    ok(await page.locator('#view-panel [data-vk-view="flat"][aria-pressed="true"]').count() === 1, "★ 「正俯視」預設鈕亮起");
+    await page.click("#btn-view-close");
+    ok(await page.locator("#view-panel.hidden").count() === 1, "★ ✕ 關閉後面板收起");
+    ok(errors.length === 0, "視角面板零 pageerror", errors.join(" | "));
     await page.close();
 }
 

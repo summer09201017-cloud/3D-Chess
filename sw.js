@@ -10,7 +10,7 @@
 //       ⇒ 逐一 add + catch,抓不到的略過。
 //    ③ app.js 每次載入 `caches.keys().forEach(delete)` 把**現役**快取也砍光(舊腳手架留下的)⇒ 離線永遠是空的。⇒ 已移除,舊版清理交給 activate。
 //    另外:js 用 `?v=N` 破快取,而 install 存的是不帶 query 的鍵 ⇒ 比對要 ignoreSearch,不然離線一個 js 都對不上。
-const CACHE_NAME = 'chess3d-v21';
+const CACHE_NAME = 'chess3d-v22';
 
 // 導覽退路:離線 / 出事時回這份殼層(⚠ 只存 `./`,不存 `./index.html` —— 見上面 ①)
 const SHELL = './';
@@ -27,6 +27,8 @@ const ASSETS_TO_CACHE = [
   './js/ai.js',
   './js/undo.js',
   './js/save.js',
+  './js/view-kit.js',
+  './js/view-kit-init.js',
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
   'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js',
   'https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js'

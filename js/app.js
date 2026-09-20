@@ -92,9 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnHint = document.getElementById('btn-hint');
     if (btnHint) btnHint.addEventListener('click', () => window.chessGame.showHint());
 
-    // 🎥 重置視角(2026-09-14 使用者要求):回到這一方的開場角度,連注視點一起歸位
-    const btnCamera = document.getElementById('btn-camera');
-    if (btnCamera) btnCamera.addEventListener('click', () => window.chessGame.board3d.resetCamera());
+    // 🎥 視角(2026-09-20 六站統一):#btn-camera 改成開關「視角面板」,重置／三段預設／兩條滑桿／換邊全在
+    //    js/view-kit-init.js(ES module)接線。這裡**不再**綁 resetCamera —— 綁了按一下開面板就順手把鏡頭歸零。
 
     // 🏷️ 棋名標籤開關(2026-09-07):使用者回報「不知道哪個棋是哪個長相」,預設開、關掉會記住。
     //    ★ 狀態寫在鈕的文字上,不是只靠 title —— 手機沒有 hover,tooltip 等於隱形。

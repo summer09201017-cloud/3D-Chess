@@ -544,3 +544,31 @@ body.menu-folded #in-app-hint {
         max-height: 40vh;
     }
 }
+
+/* 🎥 視角面板(2026-09-20,view-kit 六款 3D 棋類統一)。浮在畫布左上角、掛在 body 底下,
+   **不進 #bottom-bar** —— fitCamera 讀工具列高度算可用帶,塞進去棋盤會縮水。z 要壓過右欄工具列(12)。 */
+#view-panel {
+    position: fixed;
+    top: 64px;
+    left: 12px;
+    width: min(280px, calc(100vw - 24px));
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    z-index: 14;
+    padding: 10px 12px 12px;
+    pointer-events: auto;
+    display: grid;
+    gap: 8px;
+    --vk-accent: var(--accent);
+    --vk-accent-fg: #0f0f1b;
+    --vk-bg: rgba(255, 255, 255, 0.08);
+}
+#view-panel.hidden { display: none; }
+.vp-head { display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+.vp-head .btn { padding: 4px 10px; min-height: 32px; font-size: 0.8rem; }
+/* 三顆預設鈕在窄面板裡 4 個字要放得下(「對局視角」曾被切成「對局視…」) */
+#view-panel .vk-btn { padding-left: 4px; padding-right: 4px; }
+@media (max-width: 768px) and (orientation: portrait) { #view-panel { top: 52px; } }
+@media (orientation: landscape) and (max-height: 500px) {
+    #view-panel { top: 40px; max-height: calc(100vh - 48px); width: min(290px, calc(100vw - var(--tools-col) - 24px)); }
+}
