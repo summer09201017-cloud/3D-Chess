@@ -476,10 +476,14 @@ class ChessBoard3D {
         } else {
             dir = this.homeDir();
         }
+        /* 🐾 額外取景點(0928,動物對手):站方掛 `board3d.fitExtra = (dir) => [[x,y,z]…]`(牠的頭頂),fit.js 把距離最多拉到 1.28 倍 */
+        const dn = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+        const extra = typeof this.fitExtra === 'function' ? this.fitExtra({ x: dir[0] / dn, y: dir[1] / dn, z: dir[2] / dn }) : null;
         const fit = root_ChessFit().computeFit({
             fovDeg: this.camera.fov, W: band.W, H: band.H,
             bandTop: band.top, bandBottom: band.bottom, dir,
             margin: 1.02,   // v12:餘裕 4% → 2%(兩邊各多 1% 給棋盤)
+            extra,
         });
         this.controls.target.set(fit.target[0], fit.target[1], fit.target[2]);
         this.camera.position.set(fit.camera[0], fit.camera[1], fit.camera[2]);
@@ -560,6 +564,11 @@ class ChessBoard3D {
 
     animate() {
         requestAnimationFrame(this.animate.bind(this));
+        /* 🐾 每幀回呼(game.js 掛 opponent.update):dt 上限 0.05(切回前景那一幀不要跳一大步) */
+        const now = performance.now();
+        const dt = Math.min(0.05, Math.max(0, (now - (this._lastFrameAt || now)) / 1000));
+        this._lastFrameAt = now;
+        if (typeof this.onFrame === 'function') { try { this.onFrame(dt); } catch (e) { console.warn('onFrame', e); } }
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
     }

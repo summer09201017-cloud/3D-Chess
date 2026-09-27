@@ -34,6 +34,9 @@ const open = async (viewport) => {
     const errors = [];
     page.on("pageerror", (e) => errors.push(String(e)));
     page.on("dialog", (d) => d.accept());
+    /* 🐾 0928:這支守的是「棋盤裝得進帶、填滿 ≥85% / ≥80%」—— 動物對手坐著時 fit 會為牠讓位(棋盤最多縮 22%,browser-check 🐾 另守 ≥0.75),
+       這裡先把牠關掉再量,守的還是原本那條「沒有動物時的棋盤」。 */
+    await page.addInitScript(() => { try { localStorage.setItem('chess3d-pet', 'off'); } catch (e) { /* 私密模式 */ } });
     await page.goto(URL + "/?v=" + Date.now(), { waitUntil: "domcontentloaded" });
     /* fitCamera 跑過才算就緒(_lastFit 有值);相機是 game 建構時就有的,不用等 SW */
     await page.waitForFunction(() => window.__phantom && window.__phantom.game && window.__phantom.game.board3d

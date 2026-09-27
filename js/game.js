@@ -24,7 +24,78 @@ class ChessGame {
         this.undoManager = null;
         this.saveManager = null;
 
+        this.initPet();
         this.updateView();
+    }
+
+    /* ═══ 🐾 動物對手(2026-09-28,skill animal-opponent-kit 第七個活例;正本 majiang3d、老站範本 3D-Xiangqi)═══
+       引擎 js/animals.js、人聲 js/voice.js 是 ES module,本站接線 js/opponent.js;這支是傳統 script ⇒ 經 window.PetKit 橋接
+       (index.html 底下那段,跟 view-kit-init 同一招);橋還沒好就等 pet-kit-ready。舊瀏覽器載不進 import map ⇒ 沒有動物,棋照下。
+       反應跟狀態文字同分岔(這站沒有音效):牠想棋 think / 走子 place / 將你的軍 hop+「將軍」/ 被吃子・被將軍 gasp+「哇」/ 贏 win / 輸 lose / 和棋 shrug;
+       等你太久閒聊(opponent.update 計時)。純觀感:不進 raycast、不進 AI、不影響棋力。 */
+    initPet() {
+        this.opponent = null; this.voice = null; this._focus = null; this._petEnded = false;
+        this._reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        const build = () => {
+            const PK = window.PetKit;
+            if (!PK || this.opponent) return;
+            this.voice = PK.createVoice({ muted: () => false });   // 這站沒有 🔊 音效開關 ⇒ 只看 🐾 三段
+            this.opponent = new PK.Opponent(this.board3d, this.voice);
+            const opts = document.querySelectorAll('#pet-row .pet-opt');
+            const paint = () => opts.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pet === this.opponent.mode)));
+            opts.forEach((b) => b.addEventListener('click', () => { this.opponent.setMode(b.dataset.pet); paint(); this.updatePetLine(); }));
+            paint();
+            /* 每幀:牠的 idle / 反應 / 看著最後動的那格;waiting = 輪到你、牠在等(閒聊計時只在這時走) */
+            this.board3d.onFrame = (dt) => {
+                const waiting = !this.isAiThinking && !this.isGameOver() && this.chess.turn() === this.playerColor;
+                this.opponent.update(dt, { focus: this._focus, waiting, reduced: this._reduced });
+            };
+            window.addEventListener('pointerdown', () => this.opponent.noteInput(), true);
+            document.addEventListener('keydown', () => this.opponent.noteInput());
+            this.seatPet();   // 建構時已經有局(自動存檔 / startNew 都在 DOMContentLoaded 裡)⇒ 現在就坐
+        };
+        if (window.PetKit) build(); else window.addEventListener('pet-kit-ready', build, { once: true });
+    }
+    /** 每局開始(startNew / startDaily / 讀檔)叫一次:依模式 / 難度換動物 */
+    seatPet() {
+        if (!this.opponent) return;
+        this._petEnded = false; this._focus = null;
+        this.opponent.seat(window.PetKit.animalFor(!!this.dailyKey, this.aiDifficulty));
+        this.updatePetLine();
+    }
+    /** HUD「對手:🐱 橘貓」+ body.pet-on(給 CSS 讓臉用) */
+    updatePetLine() {
+        const O = this.opponent;
+        const petOn = !!(O && O.on);
+        const line = document.getElementById('pet-line');
+        const name = document.getElementById('pet-name');
+        if (line) line.classList.toggle('hidden', !petOn);
+        if (name) name.textContent = petOn ? (O.emoji + ' ' + O.name) : '';
+        document.body.classList.toggle('pet-on', petOn);
+    }
+    /** 走完一手(mv = chess.move 回的物件;byAi = 牠走的):看著那一格;將軍 / 吃子 / 結束各有反應,結束一局只反應一次 */
+    _petAfterMove(mv, byAi) {
+        if (!this.opponent || !this.opponent.kind || !mv) return;
+        const tile = this.board3d.tiles[mv.to];
+        if (tile) this._focus = new THREE.Vector3(tile.position.x, 0.5, tile.position.z);
+        if (this.isGameOver()) {
+            if (this._petEnded) return;
+            this._petEnded = true;
+            if (this.chess.in_checkmate()) {
+                /* in_checkmate() 時 turn() 是被將死的那一方 ⇒ 輪到玩家 = 玩家被將死 = 牠贏 */
+                if (this.chess.turn() === this.playerColor) this.opponent.react('win', 'win', 250);
+                else this.opponent.react('lose', 'lose', 250);
+            } else {
+                this.opponent.react('shrug', 'draw', 250);
+            }
+            return;
+        }
+        if (byAi) {
+            if (this.chess.in_check()) this.opponent.react('hop', 'check');
+            else this.opponent.react('place', null);
+        } else if (mv.captured || this.chess.in_check()) {
+            this.opponent.react('gasp', 'wow');
+        }
     }
 
     startNew(playerColor, difficulty) {
@@ -37,6 +108,7 @@ class ChessGame {
         this.isAiThinking = false;
         this.selectedSquare = null;
 
+        this.seatPet();   // 🐾 先坐再 fit(setCameraSide 的 fitCamera 會為牠讓位)
         this.board3d.setCameraSide(this.playerColor);
 
         if (this.undoManager) this.undoManager.clear();
@@ -83,6 +155,7 @@ class ChessGame {
         this.isAiThinking = false;
         this.selectedSquare = null;
 
+        this.seatPet();   // 🐾 每日殘局 = 🦉 貓頭鷹守黑方
         this.board3d.setCameraSide('w');
         if (this.undoManager) this.undoManager.clear();
         this.updateView();
@@ -269,6 +342,7 @@ class ChessGame {
         if (move) {
             this.clearSelection();
             this.processMoveMade();
+            this._petAfterMove(move, false);   // 🐾 你吃牠的子 / 將牠的軍 ⇒ 牠「哇」一聲
 
             // 輪到 AI
             if (!this.isGameOver() && this.chess.turn() !== this.playerColor) {
@@ -294,13 +368,15 @@ class ChessGame {
 
         this.isAiThinking = true;
         this.uiAiThinking.classList.remove('hidden');
+        if (this.opponent) this.opponent.think();   // 🐾 手托腮、頭歪、看著盤面(每三手唸一次「讓我想想」)
 
         // 使用 setTimeout 讓 UI 更新，並模擬思考時間
         setTimeout(() => {
             const bestMove = this.ai.getBestMove(this.chess, this.aiDifficulty);
             if (bestMove) {
-                this.chess.move(bestMove);
+                const mv = this.chess.move(bestMove);
                 this.processMoveMade();
+                this._petAfterMove(mv, true);   // 🐾 落子的手勢;將你的軍就跳起來喊「將軍」
             }
             this.isAiThinking = false;
             this.uiAiThinking.classList.add('hidden');
@@ -349,6 +425,7 @@ class ChessGame {
             statusText = '和棋！';
             this.showGameOver(statusText);
         } else {
+            this._petEnded = false;   // 🐾 悔棋把結束的局悔回來 ⇒ 下次結束還要反應
             statusText = `輪到 ${moveColor} (${this.chess.turn() === this.playerColor ? '你' : 'AI'})`;
             if (this.chess.in_check()) {
                 statusText += ' - 將軍！';

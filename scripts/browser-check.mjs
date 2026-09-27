@@ -170,6 +170,167 @@ const left = await page.evaluate(() => ({ key: window.__phantom.game.dailyKey,
   hidden: document.getElementById("daily-line").classList.contains("hidden") }));
 ok(!left.key && left.hidden, "一般開局=離開每日模式(狀態行收起來)", JSON.stringify(left));
 
+
+/* ══════ 🐾 動物對手(2026-09-28,skill animal-opponent-kit 第七個活例;照 3D-Xiangqi / gomoku3d ⑩ 段)══════
+   檔案側對賬 → 真點擊設定面板選三段 + 開新局(中等・白)→ 坐對面 / 鐵則遍歷 / 頭在畫面裡 / 凳子落地 / 狀態列帶臉 /
+   臉沒被 header・工具列蓋到(桌機・手機橫向・直向)→ 讓位縮盤 ≤ 25% → 走 e2e4 等牠回手(figs.log 有 think + place)
+   → 姿勢手動推時間(無頭 fps 低,等真實秒數等不到)→ 🔃 換邊仍坐對面 → 對局視角 → 三段開關 → 玩黑棋牠坐白方那側 → 人聲 runtime → 每日 = 🦉。
+   ★ 本站世界 Y-up:pos 回世界 XZ,相機在 +z(白方)時牠在 -z。 */
+console.log("—— 🐾 動物對手 ——");
+{
+  const fs = await import("node:fs");
+  const { join, dirname } = await import("node:path");
+  const { fileURLToPath, pathToFileURL } = await import("node:url");
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const { VOICE_FILES } = await import(pathToFileURL(join(root, "js", "voicePhrases.js")).href);
+  const vdir = join(root, "voice");
+  const mp3 = fs.existsSync(vdir) ? fs.readdirSync(vdir).filter((f) => f.endsWith(".mp3")).sort() : [];
+  const want = [...VOICE_FILES].sort();
+  ok(mp3.join() === want.join(), `🗣 voice/ 有 ${mp3.length} 支 mp3,跟詞庫 ${want.length} 句一一對應`);
+  const sw = fs.readFileSync(join(root, "sw.js"), "utf8");
+  const missing = mp3.filter((f) => !sw.includes(`"./voice/${f}"`));
+  ok(missing.length === 0 && sw.includes('"./voice/manifest.json"'), `🗣 sw.js 清單含 manifest + 每支 mp3(gen-voice 照目錄重生)${missing.length ? ":漏 " + missing.join(",") : ""}`);
+  let manifestOk = false;
+  try { const mf = JSON.parse(fs.readFileSync(join(vdir, "manifest.json"), "utf8")); manifestOk = mp3.length > 0 && mp3.every((f) => mf[f.replace(/\.mp3$/, "")] === "voice/" + f); } catch { /* 沒烤 */ }
+  ok(manifestOk, "🗣 manifest.json 的鍵值跟目錄一致");
+  const tiny = mp3.filter((f) => fs.statSync(join(vdir, f)).size < 2048);
+  ok(tiny.length === 0, `🗣 每支 mp3 > 2KB(空檔 = 烤失敗)${tiny.length ? ":" + tiny.join(",") : ""}`);
+  const webSpeech = fs.readdirSync(join(root, "js")).filter((f) => f.endsWith(".js") && fs.readFileSync(join(root, "js", f), "utf8").includes("speech" + "Synthesis"));
+  ok(webSpeech.length === 0, `🗣 js/ 裡沒有 Web Speech 機器聲${webSpeech.length ? ":" + webSpeech.join(",") : ""}`);
+  const kit = join(process.env.USERPROFILE || process.env.HOME || "", ".claude", "skills", "animal-opponent-kit", "assets");
+  if (fs.existsSync(kit)) {
+    const drift = [["animals.js", "animals.js"], ["voice.js", "voice.js"], ["three-shim.js", "three-global-shim.js"]]
+      .filter(([site, asset]) => fs.readFileSync(join(root, "js", site), "utf8") !== fs.readFileSync(join(kit, asset), "utf8")).map(([site]) => site);
+    ok(drift.length === 0, `🐾 引擎三支與 skill 同一份${drift.length ? ":漂移 " + drift.join(",") : ""}`);
+  }
+}
+await page.setViewportSize({ width: 1200, height: 860 });
+await page.click("#btn-settings");
+await page.waitForTimeout(400);
+await page.click('#pet-row [data-pet="voice"]');
+ok(await page.locator('#pet-row .pet-opt[aria-pressed="true"]').getAttribute("data-pet") === "voice", "🐾 設定面板有三段動物開關,按了會亮");
+await page.selectOption("#ai-difficulty", "medium");
+await page.selectOption("#player-color", "w");
+await page.click("#btn-new-game");
+await page.waitForFunction(() => { const g = window.__phantom.game; return g.opponent && g.opponent.kind === "cat" && !g.dailyKey && g.playerColor === "w"; }, null, { timeout: 5000 });
+await page.waitForTimeout(500);
+const pet0 = await page.evaluate(() => {
+  const O = window.__phantom.game.opponent, f = O.figure;
+  let neck = 0, eyes = 0, ears = 0, brows = 0, mouth = 0;
+  f.group.traverse((o) => { if (o.userData.neck) neck++; if (o.userData.eye) eyes++; if (o.userData.ear) ears++; if (o.userData.brow) brows++; if (o.userData.mouth) mouth++; });
+  return { ...O.probe(), neck, eyes, ears, brows, mouth, petName: document.getElementById("pet-name").textContent,
+    petLineShown: !document.getElementById("pet-line").classList.contains("hidden"), petOn: document.body.classList.contains("pet-on"), capsule: !!window.THREE.CapsuleGeometry };
+});
+ok(pet0.figure && pet0.visible && pet0.kind === "cat" && pet0.pos.z < 0, `🐾 中等 ⇒ 🐱 橘貓坐在對面(黑方那一側 z<0,世界 ${JSON.stringify(pet0.pos)},scale ${pet0.scale})`);
+ok(pet0.capsule, "🐾 three-shim 補上了 r128 沒有的 CapsuleGeometry");
+ok(pet0.neck === 1 && pet0.eyes === 2 && pet0.ears === 2 && pet0.brows === 2 && pet0.mouth === 1, "🐾 人物鐵則遍歷:脖子 1、眼 2、耳 2、眉 2、嘴 1");
+ok(pet0.head.inside, `🐾 桌機:頭頂在畫面裡(NDC ${pet0.head.x}, ${pet0.head.y})`);
+ok(pet0.stoolY <= pet0.floorY + 0.05, `🐾 凳子不懸空(凳底 y ${pet0.stoolY} ≤ 底座底 ${pet0.floorY})`);
+ok(pet0.petLineShown && /^🐱/.test(pet0.petName) && pet0.petOn, `🐾 狀態列對手名字帶動物(${pet0.petName})、body.pet-on`);
+const hudHits = (box) => [...document.querySelectorAll("#ui-layer header, #bottom-bar, #view-panel, #history-dock")].filter((el) => {
+  const r = el.getBoundingClientRect();
+  return r.width > 0 && r.height > 0 && !(r.right < box.l || r.left > box.r || r.bottom < box.t || r.top > box.b);
+}).map((el) => el.id || el.tagName.toLowerCase());
+const faceAt = () => page.evaluate((fn) => { const hits = eval(fn); const p = window.__phantom.game.opponent.probe(); return { box: p.headBox, head: p.head, hits: hits(p.headBox) }; }, `(${hudHits.toString()})`);
+const faceDesk = await faceAt();
+ok(faceDesk.hits.length === 0, `🐾 桌機:牠的臉沒被 header / 工具列蓋到(頭框 ${JSON.stringify(faceDesk.box)}${faceDesk.hits.length ? ";蓋到 " + faceDesk.hits.join(",") : ""})`);
+await page.setViewportSize({ width: 844, height: 390 });
+await page.waitForTimeout(600);
+const faceLand = await faceAt();
+ok(faceLand.head.inside && faceLand.hits.length === 0, `🐾 手機橫向:頭在畫面裡(${faceLand.head.x}, ${faceLand.head.y})、臉沒被蓋到${faceLand.hits.length ? ":" + faceLand.hits.join(",") : ""}`);
+await page.setViewportSize({ width: 390, height: 844 });
+await page.waitForTimeout(700);
+const facePort = await faceAt();
+ok(facePort.head.inside && facePort.hits.length === 0, `🐾 手機直向:頭在畫面裡(${facePort.head.x}, ${facePort.head.y})、臉沒被蓋到${facePort.hits.length ? ":" + facePort.hits.join(",") : ""}`);
+await page.setViewportSize({ width: 1200, height: 860 });
+await page.waitForTimeout(600);
+const shrink = await page.evaluate(() => {
+  const g = window.__phantom.game, b = g.board3d;
+  const px = (sq) => { const t = b.tiles[sq]; const v = new THREE.Vector3(t.position.x, 0.1, t.position.z).project(b.camera); return { x: (v.x + 1) / 2 * b.width, y: (1 - v.y) / 2 * b.height }; };
+  const width = () => { const a = px("a1"), h = px("h1"); return Math.hypot(h.x - a.x, h.y - a.y); };
+  const on = width();
+  g.opponent.setMode("off"); const off = width();
+  g.opponent.setMode("voice");
+  return { on: Math.round(on), off: Math.round(off), ratio: +(on / off).toFixed(3) };
+});
+ok(shrink.ratio >= 0.75 && shrink.ratio <= 1.0001, `🐾 為牠讓位但棋盤最多縮 25%(開 ${shrink.on}px / 關 ${shrink.off}px = ${shrink.ratio})`);
+/* 走一手(e2e4)等牠回手:think 在牠開算時、place 在牠落子後 —— 看 figs.log,不是 grep 程式碼 */
+const moved = await page.evaluate(async () => {
+  const g = window.__phantom.game;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  g.handleSquareClick("e2"); g.handleSquareClick("e4");
+  for (let i = 0; i < 60 && !(g.chess.turn() === "w" && !g.isAiThinking && g.opponent.figs.log.some((e) => e.kind === "place")); i++) await sleep(250);
+  await sleep(200);
+  return { turn: g.chess.turn(), log: g.opponent.figs.log.map((e) => e.kind), focus: !!g._focus, history: g.chess.history().length };
+});
+ok(moved.turn === "w" && moved.history >= 2 && moved.log.includes("think") && moved.log.includes("place") && moved.focus, `🐾 事件真的接到(figs.log):${moved.log.join(",")}`);
+const pose = await page.evaluate(() => {
+  const O = window.__phantom.game.opponent, f = O.figure, F = O.figs;
+  const said = []; const o = O.voice.say.bind(O.voice); O.voice.say = (a, e, d) => { said.push(a + ":" + e); return o(a, e, d); };
+  O.react("win", "win"); F.update(0.4);
+  const up = { armL: +f.arms[0].rotation.x.toFixed(2), armR: +f.arms[1].rotation.x.toFixed(2), open: f.mouthOpen.visible };
+  F.update(3.5); F.update(0.5);
+  const back = { armL: +f.arms[0].rotation.x.toFixed(2), smile: f.smile.visible };
+  O.react("lose", "lose"); F.update(0.4);
+  const sad = { pitch: +f.head.rotation.x.toFixed(2), smileZ: +f.smile.rotation.z.toFixed(2) };
+  F.update(3.5); F.update(0.5);
+  O.react("think", null); F.update(0.4);
+  const think = { armR: +f.arms[1].rotation.x.toFixed(2), tilt: +f.head.rotation.z.toFixed(2) };
+  O.cancel(); F.update(1);
+  O.voice.say = o;
+  return { up, back, sad, think, said };
+});
+ok(pose.up.armL < -2.2 && pose.up.armR < -2.2 && pose.up.open, `🐾 win:雙手高舉 + 張嘴(${JSON.stringify(pose.up)})`);
+ok(Math.abs(pose.back.armL + 1.2) < 0.15 && pose.back.smile, `🐾 反應完回休息姿勢、笑臉回來(${JSON.stringify(pose.back)})`);
+ok(pose.sad.pitch > 0.3 && pose.sad.smileZ < 1.6, `🐾 lose:低頭 + 苦臉(${JSON.stringify(pose.sad)})`);
+ok(pose.think.armR < -1.9 && pose.think.tilt < -0.05, `🐾 think:手托腮、頭歪(${JSON.stringify(pose.think)})`);
+ok(pose.said.join(" ") === "cat:win cat:lose", `🗣 同一個入口也叫了人聲:${pose.said.join(" ")}`);
+/* 🔃 換邊(真的按面板那顆):相機轉到 -z ⇒ 牠要坐到 +z(還是你對面),頭還在畫面裡 */
+await page.click("#btn-camera");
+await page.waitForTimeout(300);
+const beforeFlip = await page.evaluate(() => window.__phantom.game.opponent.probe().pos);
+await page.click("[data-vk-flip]");
+await page.waitForTimeout(900);
+const afterFlip = await page.evaluate(() => { window.__phantom.game.opponent.update(0.016); return window.__phantom.game.opponent.probe(); });
+ok(Math.sign(beforeFlip.z) !== Math.sign(afterFlip.pos.z) && afterFlip.head.inside, `🐾 🔃 換邊後牠還是坐你對面(z ${beforeFlip.z} → ${afterFlip.pos.z})、頭在畫面裡(${afterFlip.head.x}, ${afterFlip.head.y})`);
+await page.click('[data-vk-view="sit"]');
+await page.waitForTimeout(900);
+const sitPet = await page.evaluate(() => window.__phantom.game.opponent.probe().head);
+ok(sitPet.inside, `🐾 對局視角(34°):頭頂在畫面裡(${sitPet.x}, ${sitPet.y})`);
+await page.click("[data-vk-reset]");
+await page.waitForTimeout(600);
+await page.click("#btn-view-close");
+const toggled = await page.evaluate(() => {
+  const O = window.__phantom.game.opponent;
+  O.setMode("off"); const off = { visible: O.figure.group.visible, saved: localStorage.getItem("chess3d-pet") };
+  O.setMode("mute"); const mute = { visible: O.figure.group.visible, voiceOn: O.voiceOn };
+  O.setMode("voice");
+  return { off, mute };
+});
+ok(toggled.off.visible === false && toggled.off.saved === "off", `🐾 關掉 ⇒ 隱藏、localStorage 記 off(${JSON.stringify(toggled.off)})`);
+ok(toggled.mute.visible === true && toggled.mute.voiceOn === false, `🐾 不出聲 ⇒ 還坐著、不唸(${JSON.stringify(toggled.mute)})`);
+/* 玩黑棋:相機到 -z(黑方那側)⇒ 牠(白方)坐 +z,還是你對面;AI 先走一手 */
+await page.click("#btn-settings");
+await page.waitForTimeout(300);
+await page.selectOption("#player-color", "b");
+await page.click("#btn-new-game");
+await page.waitForFunction(() => { const g = window.__phantom.game; return g.playerColor === "b" && g.chess.history().length >= 1 && !g.isAiThinking; }, null, { timeout: 10000 });
+await page.waitForTimeout(400);
+const black = await page.evaluate(() => ({ ...window.__phantom.game.opponent.probe(), cam: +window.__phantom.game.board3d.camera.position.z.toFixed(2) }));
+ok(black.cam < 0 && black.pos.z > 0 && black.head.inside, `🐾 玩黑棋 ⇒ 相機到 z<0、牠坐白方那側 z>0(${JSON.stringify(black.pos)})、頭在畫面裡`);
+await page.click("#btn-settings");
+await page.waitForTimeout(300);
+await page.selectOption("#player-color", "w");
+await page.click("#btn-new-game");
+await page.waitForTimeout(500);
+await page.waitForFunction(() => window.__phantom.game.voice && window.__phantom.game.voice.ready(), null, { timeout: 10000 }).catch(() => {});
+const v = await page.evaluate(() => { const V = window.__phantom.game.voice; return { ready: V.ready(), has: V.has("owl", "check"), yes: V.say("cat", "win"), no: V.say("cat", "nope") }; });
+ok(v.ready && v.has && v.yes === true && v.no === false, `🗣 人聲 runtime:manifest 載到、cat-win 送去放、沒烤的不唸(${JSON.stringify(v)})`);
+await page.click("#btn-daily");
+await page.waitForFunction(() => { const g = window.__phantom.game; return g.dailyKey && g.opponent.kind === "owl"; }, null, { timeout: 5000 });
+const owl = await page.evaluate(() => ({ ...window.__phantom.game.opponent.probe(), name: document.getElementById("pet-name").textContent }));
+ok(owl.kind === "owl" && owl.visible && owl.head.inside && /^🦉/.test(owl.name), `🐾 每日殘局 ⇒ 🦉 貓頭鷹守黑方(${owl.name};頭 ${owl.head.x}, ${owl.head.y})`);
+
 ok(errors.length === 0, "整場零 pageerror", errors.join(" | ").slice(0, 200));
 
 await browser.close();

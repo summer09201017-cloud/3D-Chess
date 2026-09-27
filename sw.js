@@ -10,7 +10,7 @@
 //       ⇒ 逐一 add + catch,抓不到的略過。
 //    ③ app.js 每次載入 `caches.keys().forEach(delete)` 把**現役**快取也砍光(舊腳手架留下的)⇒ 離線永遠是空的。⇒ 已移除,舊版清理交給 activate。
 //    另外:js 用 `?v=N` 破快取,而 install 存的是不帶 query 的鍵 ⇒ 比對要 ignoreSearch,不然離線一個 js 都對不上。
-const CACHE_NAME = 'chess3d-v22';
+const CACHE_NAME = 'chess3d-v23';
 
 // 導覽退路:離線 / 出事時回這份殼層(⚠ 只存 `./`,不存 `./index.html` —— 見上面 ①)
 const SHELL = './';
@@ -29,6 +29,50 @@ const ASSETS_TO_CACHE = [
   './js/save.js',
   './js/view-kit.js',
   './js/view-kit-init.js',
+  './js/three-shim.js',
+  './js/animals.js',
+  './js/voice.js',
+  './js/opponent.js',
+  './js/voicePhrases.js',
+  /* voice:begin(scripts/gen-voice.mjs 照目錄重生,不手抄) */
+  "./voice/manifest.json",
+  "./voice/bear-chat1.mp3",
+  "./voice/bear-chat2.mp3",
+  "./voice/bear-chat3.mp3",
+  "./voice/bear-check.mp3",
+  "./voice/bear-draw.mp3",
+  "./voice/bear-lose.mp3",
+  "./voice/bear-think.mp3",
+  "./voice/bear-win.mp3",
+  "./voice/bear-wow.mp3",
+  "./voice/cat-chat1.mp3",
+  "./voice/cat-chat2.mp3",
+  "./voice/cat-chat3.mp3",
+  "./voice/cat-check.mp3",
+  "./voice/cat-draw.mp3",
+  "./voice/cat-lose.mp3",
+  "./voice/cat-think.mp3",
+  "./voice/cat-win.mp3",
+  "./voice/cat-wow.mp3",
+  "./voice/owl-chat1.mp3",
+  "./voice/owl-chat2.mp3",
+  "./voice/owl-chat3.mp3",
+  "./voice/owl-check.mp3",
+  "./voice/owl-draw.mp3",
+  "./voice/owl-lose.mp3",
+  "./voice/owl-think.mp3",
+  "./voice/owl-win.mp3",
+  "./voice/owl-wow.mp3",
+  "./voice/rabbit-chat1.mp3",
+  "./voice/rabbit-chat2.mp3",
+  "./voice/rabbit-chat3.mp3",
+  "./voice/rabbit-check.mp3",
+  "./voice/rabbit-draw.mp3",
+  "./voice/rabbit-lose.mp3",
+  "./voice/rabbit-think.mp3",
+  "./voice/rabbit-win.mp3",
+  "./voice/rabbit-wow.mp3",
+  /* voice:end */
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
   'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js',
   'https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js'

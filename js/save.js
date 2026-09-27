@@ -76,6 +76,7 @@ class SaveManager {
         document.getElementById('ai-difficulty').value = this.game.aiDifficulty;
         document.getElementById('player-color').value = this.game.playerColor;
 
+        if (this.game.seatPet) this.game.seatPet();   // 🐾 讀檔也要坐回來(難度可能跟上一局不同)
         this.game.board3d.setCameraSide(this.game.playerColor);
         this.game.clearSelection();
         this.game.updateView();

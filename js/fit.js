@@ -93,9 +93,35 @@
             const mid = (lo + hi) / 2;
             if (worstAt(mid) <= 1 / margin) hi = mid; else lo = mid;
         }
-        const dist = hi;
+        let dist = hi;
+        const distBoard = dist;
+        /* 🐾 額外取景點(0928,動物對手的頭頂;board.js 從 fitExtra 拿):也要落在帶內(邊 0.98 / 0.97),
+           但距離**最多拉到 extraMax(預設 1.28)倍**——棋盤是主角,對手只是配角:讓不下就讓牠被切一點頭,不讓棋盤縮到點不到。
+           沒給 extra = 跟以前完全一樣(distBoard === dist)。 */
+        const extra = Array.isArray(o.extra) ? o.extra.filter((p) => Array.isArray(p) && p.length === 3) : [];
+        if (extra.length) {
+            const extraMax = o.extraMax || 1.28;
+            const worstExtraAt = (dd) => {
+                const { cam } = place(dd);
+                let worst = 0;
+                for (const c of extra) {
+                    const v = sub(c, cam);
+                    const depth = -dot(v, d);
+                    if (depth <= 1e-6) return Infinity;
+                    const x = dot(v, right) / (depth * tanH);
+                    const y = dot(v, up) / (depth * tanV);
+                    worst = Math.max(worst, Math.abs(x) / 0.98, Math.abs(y - yC) / yHalf / 0.97);
+                }
+                return worst;
+            };
+            const cap = distBoard * extraMax;
+            if (worstExtraAt(distBoard) > 1) {
+                if (worstExtraAt(cap) > 1) dist = cap;
+                else { let lo2 = distBoard, hi2 = cap; for (let i = 0; i < 30; i++) { const mid = (lo2 + hi2) / 2; if (worstExtraAt(mid) <= 1) hi2 = mid; else lo2 = mid; } dist = hi2; }
+            }
+        }
         const { target, cam } = place(dist);
-        return { dist, target, camera: cam, ndcCenterY: yC, worst: worstAt(dist) };
+        return { dist, distBoard, target, camera: cam, ndcCenterY: yC, worst: worstAt(dist) };
     }
 
     const api = { computeFit, corners, BOARD, axes };

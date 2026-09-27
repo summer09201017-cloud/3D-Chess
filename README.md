@@ -17,6 +17,24 @@
 
 ## 功能
 
+- 🐾 **動物對手坐到你對面(2026-09-28,v16 / sw v23;HFP 機・Fable 5.1・0928-3D動物對手-象棋家族-家裡 場)**:skill `animal-opponent-kit` 第七個活例
+  (正本 majiang3d;老站範本 3D-Xiangqi,象棋家族六站同一場接)。簡單 🐰 白兔 / 中等 🐱 橘貓 / 困難 🐻 棕熊;📅 每日殘局 🦉 貓頭鷹守黑方;這站永遠對 AI ⇒ 永遠有一隻(除非關掉)。
+  - `js/animals.js`(引擎)/ `js/voice.js`(人聲 runtime)/ `js/three-shim.js`(全域 THREE r128 → ESM 具名匯出 + 補 CapsuleGeometry)三支與 skill assets
+    **同一份,不在這裡改**(browser-check 🐾 逐位元對賬);本站接線 `js/opponent.js`、唸稿 `js/voicePhrases.js`(4 隻 × 9 句:think / check / wow / win / lose / draw / chat×3)。
+  - ★ 本站是 CDN 全域 THREE r128 + 傳統 defer script ⇒ index.html 加 **import map**(`three` → `./js/three-shim.js`,放在第一個 module script 之前)
+    + 模組橋接掛成 `window.PetKit`(跟 view-kit-init 同一招);game.js `initPet()` 等 `pet-kit-ready`。舊瀏覽器載不進 ⇒ 沒動物、棋照下。
+  - ★ 本站世界 **Y-up**(棋盤躺 XZ)跟引擎一樣 ⇒ 不用轉父群組;座位永遠在相機對面(每幀量相機方位角 2° 一格):玩白棋牠坐 -z(黑方側)、玩黑棋牠坐 +z、🔃 換邊跟著坐到對面。
+    距離 = 底座半寬 4.5(fit.js BOARD)+ 1.25×scale;大小 0.215/1.3 × 4.5 = 0.744(頭直徑一格半);凳子落到底座底 -0.55。
+  - 相機讓位:`fit.js computeFit` 加 `extra`(取景點也要進帶,邊 0.98/0.97,**距離上限 1.28 倍**,回 `distBoard`);`board.js fitCamera` 從 `board3d.fitExtra(dir)` 拿牠的頭頂 + EAR_ROOM 0.55;
+    `board3d.onFrame(dt)` 每幀回呼。桌機實測讓位縮盤 0.82(≥0.75)。牠的頭在「標題列底 ~ 工具列頂」那條帶內 ⇒ 不會躲到 header 底下。
+  - 反應跟狀態文字同分岔:牠想棋 think(人聲每三手)/ 落子 place / 將你的軍 hop+「將軍!」/ 你吃牠的子・將牠的軍 gasp+「哇」/ 將殺 win・lose / 和棋 shrug+「平手」(一局一次閂鎖,悔棋回來會重置);
+    等你太久閒聊(15s / 再 30s,一回合兩句;pointerdown / keydown 歸零)。讀檔(save.js restoreState)也重新坐。
+  - UI:⚙️ 設定多一組「🐾 對手動物」三段(會說話 / 不出聲 / 關,localStorage `chess3d-pet`,按了立刻生效);狀態列多一段「對手:🐱 橘貓」(手機只留臉 + 名字);`body.pet-on`。
+  - 人聲:`npm run voice`(= `gen-voice.mjs --phrases js/voicePhrases.js --out voice --sw sw.js`)⇒ `voice/` 36 mp3 + manifest,`sw.js` voice:begin~end 段照目錄重生。
+    ⚠ `package.json` 拿掉 `"type": "commonjs"`(js/opponent.js、voicePhrases.js 是 ESM,Node 要靠語法偵測載;fit.js / ai.js 仍是 CJS,偵測得出來)。
+  - 驗:`npm test` 全綠(daily 63 / ai 12 / **fit 28**(+4 extra)/ sw 15);`scripts/browser-check.mjs` +30(🐾 段)⇒ **56/0**;`check:layout` 36/0(它先把動物關掉再量,守的是沒動物時的棋盤);
+    三視口截圖目視(貓整隻入鏡、耳朵沒切、header 沒蓋臉);`npm run serve`(埠 8798)新增給冒煙用。
+  ⚠ 姿勢一律 `opponent.figs.update(0.4)` 手動推時間(無頭 fps 低、dt 上限 0.05);`opponent.probe()` 一次量頭頂 / 凳子 / 座位(世界 XZ)。
 - 🎥 **視角工具列與其他五款 3D 棋類長一樣(2026-09-20,v15 / sw v22)**:使用者拍板「兩邊都做。讓六款 3D 棋類的視角工具列長一樣:預設三段 + 滑桿微調 + 換邊 + 重置」。
   工具列的「🎥 重置視角」改成「🎥 視角」,按下打開浮動面板 `#view-panel`(掛在 body、浮在畫布左上角,**不進 #bottom-bar** —— fitCamera 讀工具列高度算可用帶,塞進去棋盤會縮水):
   三段預設(斜俯視 58° / 正俯視 88° / 對局視角 34°)+ 水平旋轉 0–359° 與俯視角度 20–88° 兩條滑桿 + 🔃 換邊(繞注視點轉 180°)+ 🎯 重置視角;拖棋盤時滑桿跟著動,離預設 1.5° 內那顆預設鈕亮起。
@@ -113,7 +131,9 @@ npm test               # node test/daily.mjs
 ```bash
 npx wrangler pages deploy . --project-name 3dchess-an --branch main   # --branch main 必帶,否則進 Preview
 curl -s "https://3dchess-an.pages.dev/sw.js?b=$RANDOM" | grep CACHE_NAME   # 要是新版號
+CHECK_URL=https://3dchess-an.pages.dev node scripts/browser-check.mjs         # 線上冒煙(含 🐾 動物段)
 ```
+⚠ `deploy .` 會把整個資料夾搬上去(wrangler 預設只略過 node_modules / .git);`voice/`(動物人聲 mp3)要一起上,別另外做白名單漏掉它。
 
 改了 `index.html` / CSS / manifest / icons 任何殼層檔,先把 `sw.js` 的 `CACHE_NAME` 版本 +1 再部署,
 否則已安裝的 PWA 永遠看到舊版。

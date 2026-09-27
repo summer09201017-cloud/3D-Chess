@@ -85,5 +85,18 @@ console.log('\n── ④ 舊版寫死 (0,8,10) 在直向真的裝不下(反例)
     ok(fit.dist > Math.hypot(...cam), `新版直向退到 ${fit.dist.toFixed(1)}(舊 ${Math.hypot(...cam).toFixed(1)}),才裝得下`);
 }
 
+/* 🐾 額外取景點(0928 動物對手):頭頂在盤外上方 ⇒ 距離要拉遠、但最多 1.28 倍;本來就在帶內的點 ⇒ 距離不變;沒給 extra ⇒ distBoard === dist */
+{
+    const base = computeFit({ fovDeg: 45, W: 1200, H: 860, bandTop: 96, bandBottom: 760, dir: [0, 8, 10], margin: 1.02 });
+    const far = computeFit({ fovDeg: 45, W: 1200, H: 860, bandTop: 96, bandBottom: 760, dir: [0, 8, 10], margin: 1.02, extra: [[0, 3.2, -5.4]] });
+    ok(far.dist >= base.dist && far.dist <= base.dist * 1.28 + 1e-6 && far.distBoard === base.dist,
+        `🐾 動物頭頂(0,3.2,-5.4)⇒ 距離 ${base.dist.toFixed(2)} → ${far.dist.toFixed(2)}(≤ 1.28 倍;distBoard 仍是只收棋盤的距離)`);
+    const huge = computeFit({ fovDeg: 45, W: 1200, H: 860, bandTop: 96, bandBottom: 760, dir: [0, 8, 10], margin: 1.02, extra: [[0, 30, -5.4]] });
+    ok(Math.abs(huge.dist - base.dist * 1.28) < 1e-6, '🐾 讓不下的點 ⇒ 停在上限 1.28 倍(棋盤是主角)');
+    const near = computeFit({ fovDeg: 45, W: 1200, H: 860, bandTop: 96, bandBottom: 760, dir: [0, 8, 10], margin: 1.02, extra: [[0, 0.5, 0]] });
+    ok(near.dist === base.dist, '🐾 取景點本來就在帶內 ⇒ 距離不變');
+    ok(base.distBoard === base.dist, '沒給 extra ⇒ distBoard === dist(舊呼叫完全不受影響)');
+}
+
 console.log(`\n${fail === 0 ? '🟢' : '🔴'} fit:${pass} 過 / ${fail} 失敗`);
 process.exit(fail ? 1 : 0);

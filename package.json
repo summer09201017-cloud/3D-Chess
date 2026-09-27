@@ -6,7 +6,9 @@
   "scripts": {
     "test": "node test/daily.mjs && node test/ai.mjs && node test/fit.mjs && node test/sw.mjs",
     "check:layout": "node scripts/check-mobile-layout.mjs",
-    "check:sw": "node scripts/check-sw-nav.mjs"
+    "check:sw": "node scripts/check-sw-nav.mjs",
+    "serve": "node scripts/serve.mjs",
+    "voice": "node scripts/gen-voice.mjs --phrases js/voicePhrases.js --out voice --sw sw.js"
   },
   "repository": {
     "type": "git",
@@ -15,7 +17,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/summer09201017-cloud/3D-Chess/issues"
   },
@@ -23,6 +24,7 @@
   "private": true,
   "devDependencies": {
     "chess.js": "^0.10.3",
+    "msedge-tts": "^2.0.8",
     "playwright-core": "^1.62.1"
   }
 }

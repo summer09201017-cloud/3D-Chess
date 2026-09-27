@@ -572,3 +572,17 @@ body.menu-folded #in-app-hint {
 @media (orientation: landscape) and (max-height: 500px) {
     #view-panel { top: 40px; max-height: calc(100vh - 48px); width: min(290px, calc(100vw - var(--tools-col) - 24px)); }
 }
+
+/* ══════════ 🐾 動物對手(2026-09-28,skill animal-opponent-kit)══════════
+   設定面板多一組三段(會說話 / 不出聲 / 關);狀態列多一段「對手:🐱 橘貓」。
+   牠坐在相機對面 = 畫布正上方:fit.js 把牠的頭頂也收進「標題列底 ~ 工具列頂」那條帶 ⇒ 臉不會躲到 header 底下(browser-check 🐾 量過)。 */
+.setting-group.pet { flex-direction: column; align-items: stretch; gap: 8px; }
+.setting-group.pet .pet-opts { display: flex; gap: 6px; }
+.setting-group.pet .pet-opt { flex: 1 1 0; min-height: 44px; padding: 6px 4px; font-size: 0.85rem; }
+.setting-group.pet .pet-opt[aria-pressed="true"] { background: var(--accent); color: #0f0f1b; border-color: var(--accent); }
+.setting-group.pet .pet-note { font-size: 0.78rem; opacity: .75; line-height: 1.5; margin: 0; }
+#pet-line { margin-left: 12px; font-size: 0.95rem; font-weight: 600; opacity: .95; white-space: nowrap; }
+@media (max-width: 768px) {
+    #pet-line { margin-left: 8px; font-size: .9rem; }
+    #pet-line .pet-word { display: none; }   /* 手機狀態列窄,只留臉 + 名字,不多繞一行(帶一變高棋盤就變小) */
+}
