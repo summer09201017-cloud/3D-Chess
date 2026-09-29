@@ -106,6 +106,8 @@ class ChessGame {
         this.playerColor = playerColor;
         this.aiDifficulty = difficulty;
         this.isAiThinking = false;
+        this.gameGen = (this.gameGen || 0) + 1;   // 🎲 AI 那手回來時局已換 ⇒ 丟掉(執黑時 AI 一開局就在想,這時按新局最容易撞)
+        if (this.uiAiThinking) this.uiAiThinking.classList.add('hidden');   // 作廢那手不會回來收「思考中」
         this.selectedSquare = null;
 
         this.seatPet();   // 🐾 先坐再 fit(setCameraSide 的 fitCamera 會為牠讓位)
@@ -151,6 +153,8 @@ class ChessGame {
         this.dailyPuzzle = puzzle;
         this.dailyScored = false;
         this.playerColor = 'w';               // 題目都是白先
+        this.gameGen = (this.gameGen || 0) + 1;   // 🎲 同 startNew:丟掉上一局還在想的 AI 那手
+        if (this.uiAiThinking) this.uiAiThinking.classList.add('hidden');   // 作廢那手不會回來收「思考中」
         this.aiDifficulty = 'hard';
         this.isAiThinking = false;
         this.selectedSquare = null;
@@ -371,7 +375,9 @@ class ChessGame {
         if (this.opponent) this.opponent.think();   // 🐾 手托腮、頭歪、看著盤面(每三手唸一次「讓我想想」)
 
         // 使用 setTimeout 讓 UI 更新，並模擬思考時間
+        const gen = this.gameGen;
         setTimeout(() => {
+            if (gen !== this.gameGen) return;   // 🎲 局已換(新局 / 每日殘局 / 讀檔),這手作廢
             const bestMove = this.ai.getBestMove(this.chess, this.aiDifficulty);
             if (bestMove) {
                 const mv = this.chess.move(bestMove);

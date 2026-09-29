@@ -71,6 +71,7 @@ class SaveManager {
         }
 
         this.game.playerColor = state.playerColor || 'w';
+        this.game.gameGen = (this.game.gameGen || 0) + 1;   // 🎲 讀檔 = 換局,上一局還在想的 AI 那手作廢
         this.game.aiDifficulty = state.difficulty || 'medium';
 
         document.getElementById('ai-difficulty').value = this.game.aiDifficulty;

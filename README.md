@@ -17,6 +17,11 @@
 
 ## 功能
 
+- 🎲 **擲骰 / 擲硬幣決定先後(2026-09-29,v17 / sw v24;HFP 機・Opus 5.5・0929-3dchess擲骰-家裡 場;大表骰4)**:skill `dice-coin-toss`。
+  ⚙️ 設定「玩家顏色」多 `dice` / `coin` 兩個值,`app.js pickPlayerColor()` 先解成真顏色才進 `startNew`(贏的人執白);浮層對手臉用 `PetKit.animalFor(false, 難度)`(這一局要坐的,不是上一局的 🦉);選單留著 dice ⇒「再玩一局」照樣重擲。
+  ★ 這站本來就**可執黑**(startNew('b') 會讓 AI 先走、鏡頭換邊、存檔記 playerColor)⇒ 不像骰2 / 骰3 要補整套「可執後手」;但補了兩個執黑才會撞的洞:
+  ① `makeAiMove` 局號守門(`gameGen`,startNew / startDaily / 讀檔都 +1;AI 想到一半換局 ⇒ 舊那手作廢、收掉「思考中」);② 執黑悔到開局 ⇒ `undo.js` 叫 AI 重走(以前卡住)。
+  browser-check 71/0,兩項修正都做過突變驗證(拿掉就紅)。`js/dice-toss.js` 是 skill 正本 cp,站內不改。
 - 🐾 **動物對手坐到你對面(2026-09-28,v16 / sw v23;HFP 機・Fable 5.1・0928-3D動物對手-象棋家族-家裡 場)**:skill `animal-opponent-kit` 第七個活例
   (正本 majiang3d;老站範本 3D-Xiangqi,象棋家族六站同一場接)。簡單 🐰 白兔 / 中等 🐱 橘貓 / 困難 🐻 棕熊;📅 每日殘局 🦉 貓頭鷹守黑方;這站永遠對 AI ⇒ 永遠有一隻(除非關掉)。
   - `js/animals.js`(引擎)/ `js/voice.js`(人聲 runtime)/ `js/three-shim.js`(全域 THREE r128 → ESM 具名匯出 + 補 CapsuleGeometry)三支與 skill assets

@@ -25,6 +25,9 @@ class UndoManager {
         this.game.clearSelection();
         this.game.updateView();
         if (this.game.saveManager) this.game.saveManager.saveAuto();
+
+        // 🎲 0929:你執黑、悔到開局(只剩白方 AI 那一手可退)⇒ 又輪到 AI 執白,叫它重走,不然卡住
+        if (!this.game.isGameOver() && chess.turn() !== this.game.playerColor) this.game.makeAiMove();
     }
 
     clear() {

@@ -331,6 +331,66 @@ await page.waitForFunction(() => { const g = window.__phantom.game; return g.dai
 const owl = await page.evaluate(() => ({ ...window.__phantom.game.opponent.probe(), name: document.getElementById("pet-name").textContent }));
 ok(owl.kind === "owl" && owl.visible && owl.head.inside && /^🦉/.test(owl.name), `🐾 每日殘局 ⇒ 🦉 貓頭鷹守黑方(${owl.name};頭 ${owl.head.x}, ${owl.head.y})`);
 
+/* 🎲 擲骰 / 擲硬幣決定先後(0929,skill dice-coin-toss):
+   ★ 刻意緊接在每日殘局之後擲:那時坐著的是 🦉,浮層要印「這一局要坐的」🐱(中等),不是上一局的 🦉。
+   判定=畫面:matrix3d 反推朝上那面 = 記錄值;贏的人執白;執黑 ⇒ AI 先走、相機到 z<0、悔到開局 AI 再走一次。
+   ★ 等「開始鈕出現 / AI 走完」這種狀態,不用 waitForTimeout 等動畫(無頭 fps 低)。 */
+console.log("—— 🎲 擲骰決定先後 ——");
+const sideState = () => page.evaluate(() => { const g = window.__phantom.game; return {
+  color: g.playerColor, plies: g.chess.history().length, turn: g.chess.turn(), camZ: g.board3d.camera.position.z, thinking: g.isAiThinking,
+  status: document.getElementById("game-status") ? document.getElementById("game-status").textContent : g.uiStatus.textContent }; });
+ok(await page.locator('#player-color option').count() === 4, "🎲 玩家顏色多兩個選項:擲骰 / 擲硬幣");
+for (const kind of ["dice", "coin"]) {
+  await page.click("#btn-settings");
+  await page.selectOption("#player-color", kind);
+  await page.selectOption("#ai-difficulty", "medium");
+  await page.click("#btn-new-game");
+  await page.waitForSelector(".dt-ov .dt-go:not([hidden])", { timeout: 15000 });
+  const t = await page.evaluate(async () => {
+    const els = [...document.querySelectorAll(".dt-die,.dt-coin")];
+    return { shown: (await Promise.all(els.map((el) => window.__phantom.topFace(el)))).map(String), rec: els.map((el) => el.dataset.v), msg: document.querySelector(".dt-msg").textContent,
+      seats: [...document.querySelectorAll(".dt-seat")].map((s) => s.textContent.trim().slice(0, 12)),
+      firstSeat: [...document.querySelectorAll(".dt-seat")].findIndex((s) => s.classList.contains("first")), goH: document.querySelector(".dt-go").getBoundingClientRect().height };
+  });
+  ok(t.shown.join() === t.rec.join(), `${kind}:畫面朝上 = 記錄值(畫面 ${t.shown} / 記錄 ${t.rec})`);
+  ok(t.goH >= 44, `${kind}:開始鈕 ≥44px(${t.goH})`);
+  if (kind === "dice") ok(t.seats.some((s) => s.includes("🐱")) && !t.seats.some((s) => s.includes("🦉")), `🎲 浮層是這一局要坐的 🐱(中等),不是上一局的 🦉(${t.seats.join(" / ")})`);
+  const youFirst = kind === "coin" ? t.shown[0] === "heads" : t.firstSeat === 0;
+  await page.click(".dt-go");
+  await page.waitForFunction(() => !document.querySelector(".dt-ov"), null, { timeout: 5000 });
+  await page.waitForFunction(() => { const g = window.__phantom.game; return !g.isAiThinking && g.chess.turn() === g.playerColor && !g.dailyKey; }, null, { timeout: 20000 });
+  const s = await sideState();
+  ok(s.color === (youFirst ? "w" : "b") && (s.color === "b" ? s.camZ < 0 : s.camZ > 0) && s.plies === (s.color === "b" ? 1 : 0),
+    `${kind}:${t.msg} ⇒ 你執 ${s.color}、相機 z=${s.camZ.toFixed(1)}、已走 ${s.plies} 手`);
+  ok(await page.evaluate((k) => document.getElementById("player-color").value === k, kind), `${kind}:選單還留著 ${kind}(再玩一局照樣重擲)`);
+}
+// 執黑:局號守門 —— AI 還在想(一開局就在想)時馬上按新局執白 ⇒ 舊那手不可跑進新局
+await page.click("#btn-settings");
+await page.selectOption("#player-color", "b");
+await page.click("#btn-new-game");
+await page.waitForFunction(() => window.__phantom.game.isAiThinking, null, { timeout: 5000 });
+await page.click("#btn-settings");
+await page.selectOption("#player-color", "w");
+await page.click("#btn-new-game");
+await page.waitForFunction(() => { const g = window.__phantom.game; return g.playerColor === "w" && !g.isAiThinking; }, null, { timeout: 5000 });
+await page.waitForFunction(() => document.getElementById("ai-thinking").classList.contains("hidden"), null, { timeout: 5000 }).catch(() => {});
+await page.evaluate(() => new Promise((r) => setTimeout(r, 900)));   // 舊那手的 500ms 計時一定已到點(真時鐘,不是遊戲時間)
+const guard = await sideState();
+ok(guard.plies === 0 && guard.turn === "w", `🎲 AI 想到一半換新局 ⇒ 舊那手作廢(新局已走 ${guard.plies} 手、輪到 ${guard.turn})`);
+ok(await page.evaluate(() => document.getElementById("ai-thinking").classList.contains("hidden")), "🎲 作廢那手不留「AI 思考中」");
+// 執黑:AI 先走 → 自動存檔記執黑 → 悔棋悔到開局 AI 再走一次
+await page.click("#btn-settings");
+await page.selectOption("#player-color", "b");
+await page.click("#btn-new-game");
+await page.waitForFunction(() => { const g = window.__phantom.game; return g.playerColor === "b" && g.chess.history().length === 1 && !g.isAiThinking; }, null, { timeout: 20000 });
+const blk = await sideState();
+ok(blk.camZ < 0 && blk.turn === "b" && /你/.test(blk.status), `⚫ 執黑 ⇒ AI 執白先走一手、相機到黑方、狀態寫你(${blk.status})`);
+const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("chess3d_autosave") || "{}").playerColor);
+ok(saved === "b", `⚫ 自動存檔記得執黑(playerColor ${saved})`);
+await page.click("#btn-undo");
+await page.waitForFunction(() => { const g = window.__phantom.game; return g.chess.history().length === 1 && !g.isAiThinking && g.chess.turn() === "b"; }, null, { timeout: 20000 });
+ok(true, "⚫ 悔棋悔到開局 ⇒ AI 執白再走一次、又輪到你");
+
 ok(errors.length === 0, "整場零 pageerror", errors.join(" | ").slice(0, 200));
 
 await browser.close();

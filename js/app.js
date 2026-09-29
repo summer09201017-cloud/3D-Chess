@@ -124,22 +124,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     btnCloseSaves.addEventListener('click', () => modalSaves.classList.add('hidden'));
 
+    /* 🎲 這一局你執哪色(0929,skill dice-coin-toss):選了擲骰 / 擲硬幣才開浮層,贏的人執白(白先走)。
+       ★ 'dice' / 'coin' 永遠不流進 startNew —— 先解成真顏色。
+       ★ 浮層上的臉用「這一局要坐的那隻」(animalFor(難度)),不是 opponent.kind —— 那可能是上一局每日殘局的 🦉(gomoku3d 實測)。
+       ⚠ dice-toss.js 載不進來 ⇒ 靜默亂數,照樣分得出誰先。 */
+    const pickPlayerColor = async (pick, difficulty) => {
+        if (pick === 'w' || pick === 'b') return pick;
+        try {
+            const { tossForOrder } = await import(new URL('js/dice-toss.js?v=18', document.baseURI).href);
+            const PK = window.PetKit, g = window.chessGame;
+            const A = PK && PK.ANIMALS[PK.animalFor(false, difficulty)];
+            const LABEL = { easy: '簡單', medium: '中等', hard: '困難' };
+            const foe = A && g.opponent && g.opponent.mode !== 'off' ? `${A.emoji} ${A.name}` : `🤖 AI(${LABEL[difficulty] || '中等'})`;
+            const r = await tossForOrder({ players: ['你', foe], mode: pick, firstText: (name) => `${name} 先!執 ⚪ 白方` });
+            return r.first === 0 ? 'w' : 'b';
+        } catch (e) {
+            console.warn('🎲 擲骰浮層沒載起來,改用亂數決定', e);
+            return Math.random() < 0.5 ? 'w' : 'b';
+        }
+    };
+
     // 新開局（包含重置狀態）
-    const startNewGame = () => {
+    let newGameGen = 0;   // 🎲 擲骰那幾秒又按了一次新局 ⇒ 前一次作廢
+    const startNewGame = async () => {
         modalSettings.classList.add('hidden');
         modalGameOver.classList.add('hidden');
 
-        // 取得玩家設定
+        // 取得玩家設定(選單留著 'dice' / 'coin' ⇒ 「再玩一局」照樣重擲)
         const difficulty = document.getElementById('ai-difficulty').value;
-        const playerColor = document.getElementById('player-color').value;
+        const gen = ++newGameGen;
+        const playerColor = await pickPlayerColor(document.getElementById('player-color').value, difficulty);
+        if (gen !== newGameGen) return;
 
         if (window.chessGame) {
             window.chessGame.startNew(playerColor, difficulty);
         }
     };
 
-    btnRestart.addEventListener('click', startNewGame);
-    btnNewGame.addEventListener('click', startNewGame);
+    btnRestart.addEventListener('click', () => startNewGame());
+    btnNewGame.addEventListener('click', () => startNewGame());
 
     /* 📅 每日殘局(一組多題):開題 + 說明。n 不給=接今天還沒解的第一題。
        ★ announce=false 用在結算框的「下一題」(剛解完不想再彈一次長說明,
@@ -188,4 +211,5 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 測試掛勾(驗收腳本用;艦隊慣例)——真人操作不經過它
-window.__phantom = { get game() { return window.chessGame; } };
+window.__phantom = { get game() { return window.chessGame; },
+    topFace: (el) => import(new URL('js/dice-toss.js?v=18', document.baseURI).href).then((m) => m.topFace(el)) };   // 🎲 判定=畫面
